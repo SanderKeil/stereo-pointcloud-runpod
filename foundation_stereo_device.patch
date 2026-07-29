@@ -1,0 +1,61 @@
+diff --git a/scripts/run_demo.py b/scripts/run_demo.py
+index 119bbd7..72f0ba8 100644
+--- a/scripts/run_demo.py
++++ b/scripts/run_demo.py
+@@ -40,6 +40,7 @@ if __name__=="__main__":
+   parser.add_argument('--denoise_cloud', type=int, default=1, help='whether to denoise the point cloud')
+   parser.add_argument('--denoise_nb_points', type=int, default=30, help='number of points to consider for radius outlier removal')
+   parser.add_argument('--denoise_radius', type=float, default=0.03, help='radius to use for outlier removal')
++  parser.add_argument('--vis', type=int, default=1, help='pop up an interactive Open3D viewer window at the end')
+   args = parser.parse_args()
+ 
+   set_logging_format()
+@@ -59,11 +60,13 @@ if __name__=="__main__":
+ 
+   model = FoundationStereo(args)
+ 
+-  ckpt = torch.load(ckpt_dir)
++  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
++  logging.info(f"Using device: {device}")
++  ckpt = torch.load(ckpt_dir, map_location=device)
+   logging.info(f"ckpt global_step:{ckpt['global_step']}, epoch:{ckpt['epoch']}")
+   model.load_state_dict(ckpt['model'])
+ 
+-  model.cuda()
++  model.to(device)
+   model.eval()
+ 
+   code_dir = os.path.dirname(os.path.realpath(__file__))
+@@ -77,8 +80,8 @@ if __name__=="__main__":
+   img0_ori = img0.copy()
+   logging.info(f"img0: {img0.shape}")
+ 
+-  img0 = torch.as_tensor(img0).cuda().float()[None].permute(0,3,1,2)
+-  img1 = torch.as_tensor(img1).cuda().float()[None].permute(0,3,1,2)
++  img0 = torch.as_tensor(img0).to(device).float()[None].permute(0,3,1,2)
++  img1 = torch.as_tensor(img1).to(device).float()[None].permute(0,3,1,2)
+   padder = InputPadder(img0.shape, divis_by=32, force_square=False)
+   img0, img1 = padder.pad(img0, img1)
+ 
+@@ -123,12 +126,13 @@ if __name__=="__main__":
+       o3d.io.write_point_cloud(f'{args.out_dir}/cloud_denoise.ply', inlier_cloud)
+       pcd = inlier_cloud
+ 
+-    logging.info("Visualizing point cloud. Press ESC to exit.")
+-    vis = o3d.visualization.Visualizer()
+-    vis.create_window()
+-    vis.add_geometry(pcd)
+-    vis.get_render_option().point_size = 1.0
+-    vis.get_render_option().background_color = np.array([0.5, 0.5, 0.5])
+-    vis.run()
+-    vis.destroy_window()
++    if args.vis:
++      logging.info("Visualizing point cloud. Press ESC to exit.")
++      vis = o3d.visualization.Visualizer()
++      vis.create_window()
++      vis.add_geometry(pcd)
++      vis.get_render_option().point_size = 1.0
++      vis.get_render_option().background_color = np.array([0.5, 0.5, 0.5])
++      vis.run()
++      vis.destroy_window()
+ 
