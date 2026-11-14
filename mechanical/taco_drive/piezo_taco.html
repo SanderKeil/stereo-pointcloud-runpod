@@ -1,0 +1,295 @@
+<title>Piezo Taco Rev D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: single drawing-sheet column; animated concept view first, then the trick, station anatomy, sizing table, verdict. */
+:root {
+  --bg: #f3f5f7;
+  --sheet: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6878;
+  --rule: #d6dde5;
+  --accent: #1f5fa8;
+  --warn: #a8551f;
+  --ok: #2f7a4a;
+  --view: #e7ecf1;
+  --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+    --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+  --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 36px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 34px/1.1 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 21px/1.25 var(--font-display); margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--font-body); margin: 14px 0 4px; }
+p { margin: 0 0 10px; max-width: 68ch; }
+.lede { color: var(--muted); max-width: 70ch; }
+section { min-width: 0; }
+.mono, td.n, .kv b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* viewer */
+.viewer { background: var(--view); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+#stage { width: 100%; aspect-ratio: 16 / 10; max-width: 100%; display: block; touch-action: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--rule); background: var(--sheet); font-size: 13px; }
+.controls button { font: 500 13px var(--font-body); padding: 5px 12px; border-radius: 4px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; }
+.controls button:focus-visible, .controls input:focus-visible, .controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.controls select { font: 13px var(--font-body); background: var(--bg); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
+.readout { margin-left: auto; font: 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.cap { font-size: 13px; color: var(--muted); padding: 8px 12px 12px; background: var(--sheet); margin: 0; max-width: none; }
+
+/* key numbers */
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.kv div { background: var(--sheet); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.kv span { font-size: 12px; color: var(--muted); }
+.kv b { font-size: 18px; font-weight: 500; }
+.kv b.warn { color: var(--warn); }
+.kv b.ok { color: var(--ok); }
+
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 12px var(--font-body); color: var(--muted); letter-spacing: .03em; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; white-space: nowrap; }
+tr.pick td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tag { display: inline-block; font: 500 11px var(--font-mono); padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.no { color: var(--muted); }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.two > * { min-width: 0; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } h1 { font-size: 28px; } .readout { margin-left: 0; width: 100%; } }
+ol, ul { margin: 0 0 10px; padding-left: 20px; max-width: 70ch; }
+li { margin-bottom: 5px; }
+.formula { font: 14px var(--font-mono); background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 12px; display: block; margin: 6px 0 12px; overflow-x: auto; white-space: pre; }
+code { font: 13px var(--font-mono); }
+.note { border-left: 3px solid var(--warn); padding: 4px 0 4px 12px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Taco-fold disc × piezo stations · Ø100 back to back · 140:1 · Rev D concept (speculative)</div>
+    <h1>Piezo Taco Rev D</h1>
+    <p class="lede">Your bending disc, driven by piezos. Two flat spring-steel discs sit back to back on one shaft and fold like a taco onto a central anvil ring. Around each disc is a ring of 44 small stations. Each one rides the sheet passively, then locks to the frame and presses the sheet down with an amplified piezo just ahead of the fold. Those pushes move the fold round, and the disc creeps forward at 1/140 of the fold's speed.</p>
+  </header>
+
+  <section class="viewer" aria-label="Concept view">
+    <canvas id="stage"></canvas>
+    <div class="controls">
+      <button id="play" type="button">Pause</button>
+      <label for="speed">Wave speed <input id="speed" type="range" min="0.05" max="1.5" step="0.05" value="0.35"></label>
+      <label for="ratio">Output shown at <select id="ratio"><option value="10">10:1 (demo)</option><option value="140">140:1 (true)</option></select></label>
+      <label for="cover"><input id="cover" type="checkbox"> Covers</label>
+      <label for="lower"><input id="lower" type="checkbox" checked> Lower disc</label>
+      <span class="readout" id="readout">—</span>
+    </div>
+    <p class="cap">Concept visualization built from simple shapes, not CAD. Fold heights are true scale; piezo motions (≤ 135 µm) are too small to see, so station state is shown by colour. <b style="color:var(--warn)">Orange diamond</b>: locked and pushing at the leading edge. <b style="color:#c0392b">Red pad</b>: the one station per lobe currently pinning the disc. Grey: riding the sheet on its follower spring. Followers ride the sheet up to 4.4 mm.</p>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>The trick that makes it possible</h2>
+      <p>A piezo moves about 0.1 mm at best, but the rim of a folded disc moves 4.4 mm at every station on every wave cycle. So the piezo can't be the thing that follows the sheet. Each station therefore splits the job in three:</p>
+      <ol>
+        <li><b>Follower plunger</b> on a light spring. It rides the sheet up and down, passively.</li>
+        <li><b>Piezo lock</b>: a small stack that grips the plunger stem to the frame.</li>
+        <li><b>Amplified piezo pusher</b> (5×5×18 mm stack, about ×10 flexure amplifier, ~135 µm) between the locked stem and the pad.</li>
+      </ol>
+      <p>Just ahead of the fold, the sheet is within about 70 µm of the anvil. A station locks there and pushes that last bit down, which drags the fold axis forward by about 8°. The station then keeps pressing as the clamp, while the next station ahead takes over pushing.</p>
+    </div>
+    <div>
+      <h2>What sets the numbers</h2>
+      <ul>
+        <li><b>Station pitch.</b> Each push only moves the fold until the pushed station reaches the edge of the flat land (±16.6° around the axis). For the next station to be within piezo reach, the pitch can't exceed that advance: 8.4° at 135 µm, so 44 stations per side.</li>
+        <li><b>Grip.</b> Only one station per lobe may pin the disc while the fold moves; two pinned stations would scrub. Grip is 2 discs × 2 lobes × 2 faces × μ × clamp × r.</li>
+        <li><b>Speed.</b> The follower plungers have to track 4.4 mm of rim motion about 35 times a second. Spring force over plunger mass limits that, and adding spring force pushes the sheet out of its pure single-axis fold. The piezos themselves could go 50× faster.</li>
+        <li><b>The sheet's own vibration.</b> The fold is the disc's two-node-line bending mode, which rings at about 70 Hz at Ø100. Stations bend at about 35 Hz at full speed, half of that.</li>
+        <li><b>Torque cap.</b> The 0.15 mm sheet wrinkles in shear at the hub at about 3.7 N·m (two discs, coarse estimate).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Headline spec at Ø100</h2>
+    <div class="kv">
+      <div><span>Package (estimate)</span><b>Ø124 × ~70 mm</b></div>
+      <div><span>Discs</span><b>2 × 0.15 mm, δ 4.41</b></div>
+      <div><span>Ratio</span><b>140 : 1</b></div>
+      <div><span>Stations</span><b>44 per side</b></div>
+      <div><span>Piezo stacks</span><b class="warn">176</b></div>
+      <div><span>Pusher stroke / lock gap</span><b>135 / 68 µm</b></div>
+      <div><span>Clamp force per station</span><b>28 N</b></div>
+      <div><span>Grip torque</span><b>2.6 N·m</b></div>
+      <div><span>Sheet wrinkling limit</span><b>~3.7 N·m</b></div>
+      <div><span>Output speed (follower-limited)</span><b class="warn">~7 rpm</b></div>
+      <div><span>Station rate</span><b>~35 Hz</b></div>
+      <div><span>Output power</span><b>~2 W</b></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it scales</h2>
+    <p>Geometry scaled in proportion from the Ø100 disc, so the ratio (140:1) and bending stress (±331 MPa) stay the same. Amplification trades station count against clamp force: more stroke means fewer stations but weaker clamps. Values from <code>sizing_revD.py</code>; treat them as ±50%.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Disc Ø</th><th>Sheet</th><th>Pusher stack · amp</th><th>Stroke</th><th>Stations / side</th><th>Piezos</th><th>Clamp</th><th>Torque (grip or sheet limit)</th><th>Speed</th></tr></thead>
+      <tbody>
+        <tr><td class="n">40</td><td class="n">0.06</td><td>3×3×9 · ×5</td><td class="n">34 µm</td><td class="n">54</td><td class="n">216</td><td class="n">20 N</td><td class="n">0.24 N·m (sheet)</td><td class="n">~12 rpm</td></tr>
+        <tr><td class="n">60</td><td class="n">0.09</td><td>5×5×18 · ×10</td><td class="n">135 µm</td><td class="n">36</td><td class="n">144</td><td class="n">28 N</td><td class="n">0.8 N·m (sheet)</td><td class="n">~7 rpm</td></tr>
+        <tr class="pick"><td class="n">100</td><td class="n">0.15</td><td>5×5×18 · ×10</td><td class="n">135 µm</td><td class="n">44</td><td class="n">176</td><td class="n">28 N</td><td class="n">2.6 N·m (grip)</td><td class="n">~7 rpm</td></tr>
+        <tr><td class="n">100</td><td class="n">0.15</td><td>7×7×36 · ×10</td><td class="n">270 µm</td><td class="n">32</td><td class="n">128</td><td class="n">54 N</td><td class="n">3.7 N·m (sheet)</td><td class="n">~4.5 rpm</td></tr>
+        <tr><td class="n">150</td><td class="n">0.225</td><td>7×7×36 · ×10</td><td class="n">270 µm</td><td class="n">38</td><td class="n">152</td><td class="n">54 N</td><td class="n">7.1 N·m (grip)</td><td class="n">~5 rpm</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Honest verdict</h2>
+    <p>It can work in principle, but it's a poor match. The fold is a reduction gear: it turns a fast, low-force wave into slow, high torque. Piezos are already slow-stroke and high-force, so the 140:1 reduction mostly throws away their speed, while torque is still capped by sheet wrinkling and friction. That's how you end up with 176 stacks for about 2.6 N·m at 7 rpm. For comparison, the Ø20 walker (Rev C) reaches about 0.6 N·m at 20–40 rpm with 8 stacks.</p>
+    <p>Directions that would make the fold earn its keep with piezos:</p>
+    <ul>
+      <li><b>Lower ratio, bigger rim drop.</b> At 30–50:1 each push moves the output more, but stations must then reach further, which takes more amplification and leaves weaker clamps.</li>
+      <li><b>Resonant fold.</b> Run the fold as a travelling wave near the disc's ~70 Hz bending mode, so the sheet's own vibration carries the motion and the piezos only top up energy and clamp. The followers still limit speed, and controlling a mm-amplitude resonant wave is research territory.</li>
+      <li><b>Shared followers.</b> Replace individual followers with a ring that follows the fold for many stations at once. That cuts parts, but it's effectively a cam ring, which brings back the wave generator you wanted to avoid.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Risks if you pursue it</h2>
+    <ol>
+      <li><b>Follower drag and shape.</b> 44 followers each pressing about 0.8 N disturb the pure single-axis fold. Measure the fold shape with followers fitted.</li>
+      <li><b>Lock slip.</b> The stem lock must hold the pusher reaction (~30–50 N) by friction on a 2–3 mm stem, engaging within microseconds and without creep.</li>
+      <li><b>Hand-off timing.</b> Exactly one pinned station per lobe, handed over as each pushed station lands. This needs per-station sensing of sheet height, or a precise model of the fold.</li>
+      <li><b>Channel count.</b> 176 stacks. Mirror-image stations on the two discs, and opposite lobes, can share a channel, giving about 44 lock and 44 push channels at Ø100.</li>
+      <li><b>Sheet fatigue and wrinkling.</b> Unchanged from Rev B.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Files</h2>
+    <p><code>mechanical/taco_drive/sizing_revD.py</code> holds the station-pitch, grip, follower and sheet-mode model and prints the scaling table. This page builds its 3D view from simple shapes. Revs A–C (rollers, magnetic plungers, Ø20 walker) are in the same folder.</p>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const P = { R0: 50, RH: 12, L: 34, D: 4.41, T: 0.15, RC: 48, XF: 46, ZA: 8.3, ZH: 12.71, N: 44, ZC: 34 };
+  const PHI_L = Math.acos(P.XF / P.RC), ADV = 8.384 * Math.PI / 180, PHI_G = PHI_L + ADV;
+  const canvas = document.getElementById("stage"), readout = document.getElementById("readout");
+  if (!window.THREE) { readout.textContent = "3D library failed to load"; return; }
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1.6, 1, 2000);
+  camera.position.set(150, 120, 175);
+  const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(80, 160, 60); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-100, -50, -80); scene.add(fill);
+  const world = new THREE.Group(); world.rotation.x = -Math.PI / 2; scene.add(world);
+  const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, metalness: 0.35, roughness: 0.55, side: THREE.DoubleSide }, o || {}));
+
+  // stator plate with anvil rings, shaft, hubs
+  const ring = (ro, ri, h, z, m) => { const s = new THREE.Shape(); s.absarc(0, 0, ro, 0, Math.PI * 2); const hole = new THREE.Path(); hole.absarc(0, 0, ri, 0, Math.PI * 2, true); s.holes.push(hole);
+    const g = new THREE.ExtrudeGeometry(s, { depth: h, bevelEnabled: false, curveSegments: 96 }); const me = new THREE.Mesh(g, m); me.position.z = z; return me; };
+  world.add(ring(62, 6, 16, -8, M("#8592a0")));
+  world.add(ring(51, 45.5, 0.3, 8, M("#c9a24a")));
+  world.add(ring(51, 45.5, 0.3, -8.3, M("#c9a24a")));
+  const output = new THREE.Group(); world.add(output);
+  const cyl = (r, z0, z1, m) => { const g = new THREE.CylinderGeometry(r, r, z1 - z0, 48); const me = new THREE.Mesh(g, m); me.rotation.x = Math.PI / 2; me.position.z = (z0 + z1) / 2; return me; };
+  output.add(cyl(5, -42, 42, M("#9aa4ad")));
+  output.add(cyl(12, P.ZH - 4, P.ZH, M("#9aa4ad"))); output.add(cyl(12, -P.ZH, -P.ZH + 4, M("#9aa4ad")));
+  output.add(cyl(11, P.ZH + 0.15, P.ZH + 2.65, M("#b8c0c8"))); output.add(cyl(11, -P.ZH - 2.65, -P.ZH - 0.15, M("#b8c0c8")));
+  const covers = new THREE.Group(); world.add(covers); covers.visible = false;
+  const cm = M("#8592a0", { transparent: true, opacity: 0.28, depthWrite: false });
+  covers.add(ring(62, 38, 3, P.ZC, cm)); covers.add(ring(62, 38, 3, -P.ZC - 3, cm)); covers.add(ring(62, 59, P.ZC * 2, -P.ZC, cm));
+
+  // procedural discs (top; bottom mirrored)
+  const NR = 40, NT = 220, RIN = 5.1, nV = (NR + 1) * (NT + 1);
+  const pos = new Float32Array(nV * 3), col = new Float32Array(nV * 3), base = [];
+  for (let i = 0; i <= NR; i++) for (let j = 0; j <= NT; j++) {
+    const r = RIN + (P.R0 - RIN) * i / NR, th = 2 * Math.PI * j / NT; base.push([r, th]);
+    const c = new THREE.Color((th < 0.04 || th > 2 * Math.PI - 0.04) && r > 14 ? "#f2c230" : "#cfd6dd"); const k = (i * (NT + 1) + j) * 3; col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b; }
+  const idx = []; for (let i = 0; i < NR; i++) for (let j = 0; j < NT; j++) { const a = i * (NT + 1) + j, b = a + 1, c = a + NT + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const dgeo = new THREE.BufferGeometry(); dgeo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); dgeo.setAttribute("color", new THREE.BufferAttribute(col, 3)); dgeo.setIndex(idx);
+  const dmat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.5, roughness: 0.35, side: THREE.DoubleSide });
+  const discs = [];
+  for (const side of [1, -1]) { const g = new THREE.Group(); g.scale.z = side; const m = new THREE.Mesh(dgeo, dmat); m.position.z = P.ZH; g.add(m); world.add(g); discs.push(g); }
+  const fold = u => { const a = Math.abs(u); if (a <= P.RH) return 0; const q = Math.min(a - P.RH, P.L) / P.L; return P.D * (3 * q * q - 2 * q * q * q); };
+
+  // stations
+  const dia = new THREE.Shape(); dia.moveTo(0, 0); dia.lineTo(3.2, 3.5); dia.lineTo(0, 7); dia.lineTo(-3.2, 3.5); dia.lineTo(0, 0);
+  const hole = new THREE.Path(); hole.moveTo(0, 0.9); hole.lineTo(-2.3, 3.5); hole.lineTo(0, 6.1); hole.lineTo(2.3, 3.5); hole.lineTo(0, 0.9); dia.holes.push(hole);
+  const diaGeo = new THREE.ExtrudeGeometry(dia, { depth: 3, bevelEnabled: false }); diaGeo.translate(0, 0, -1.5);
+  const padGeo = new THREE.BoxGeometry(4, 4.6, 1.6), stemGeo = new THREE.CylinderGeometry(1, 1, 1, 12), lockGeo = new THREE.BoxGeometry(5, 5, 4), stackGeo = new THREE.BoxGeometry(2.2, 1.6, 5);
+  const stations = [];
+  const greyPad = new THREE.Color("#5d95cc"), redPad = new THREE.Color("#c0392b"), dark = new THREE.Color("#000"), glow = new THREE.Color("#ff7a1a");
+  for (const side of [1, -1]) for (let k = 0; k < P.N; k++) {
+    const th = 2 * Math.PI * k / P.N;
+    const holder = new THREE.Group(); holder.rotation.z = th; holder.scale.z = side; world.add(holder);
+    const lock = new THREE.Mesh(lockGeo, M("#6b7680")); lock.position.set(P.RC, 0, P.ZC - 2); holder.add(lock);
+    const mov = new THREE.Group(); holder.add(mov);
+    const pad = new THREE.Mesh(padGeo, M("#5d95cc")); pad.position.set(P.RC, 0, P.ZA + P.T + 0.8); mov.add(pad);
+    const dWrap = new THREE.Group(); dWrap.position.set(P.RC, 0, P.ZA + P.T + 1.6); dWrap.rotation.z = Math.PI / 2; const dIn = new THREE.Mesh(diaGeo, M("#4a7fb5")); dIn.rotation.x = Math.PI / 2; dWrap.add(dIn); mov.add(dWrap);
+    const st = new THREE.Mesh(stackGeo, M("#2f3a46")); st.position.set(P.RC, 0, P.ZA + P.T + 5.1); mov.add(st);
+    const stemLen = P.ZC - (P.ZA + P.T + 8.6) + 6; const stem = new THREE.Mesh(stemGeo, M("#9aa4ad")); stem.scale.y = stemLen; stem.rotation.x = Math.PI / 2; stem.position.set(P.RC, 0, P.ZA + P.T + 8.6 + stemLen / 2); mov.add(stem);
+    stations.push({ th, side, mov, pad, dMat: dIn.material, lock });
+  }
+
+  let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const playBtn = document.getElementById("play"); playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.addEventListener("click", () => { playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; });
+  const speedEl = document.getElementById("speed"), ratioEl = document.getElementById("ratio");
+  const coverEl = document.getElementById("cover"), lowerEl = document.getElementById("lower");
+  coverEl.addEventListener("change", () => { covers.visible = coverEl.checked; });
+  lowerEl.addEventListener("change", () => { discs[1].visible = lowerEl.checked; stations.forEach(s => { if (s.side < 0) s.mov.parent.visible = lowerEl.checked; }); });
+
+  let psi = 0, last = performance.now();
+  const wrapLobe = a => { a = ((a % Math.PI) + Math.PI) % Math.PI; return a > Math.PI / 2 ? a - Math.PI : a; };
+  function resize() { const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
+    if (canvas.width !== Math.round(w * pr) || canvas.height !== Math.round(h * pr)) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); } }
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (playing) psi += dt * parseFloat(speedEl.value);
+    const alpha = psi / parseFloat(ratioEl.value);
+    output.rotation.z = alpha;
+    const ca = Math.cos(psi), sa = Math.sin(psi);
+    for (let v = 0; v < base.length; v++) { const [r, th] = base[v], ph = th + alpha, x = r * Math.cos(ph), y = r * Math.sin(ph); const k = v * 3; pos[k] = x; pos[k + 1] = y; pos[k + 2] = -fold(x * ca + y * sa); }
+    dgeo.attributes.position.needsUpdate = true; dgeo.computeVertexNormals();
+    // per lobe: pinned = largest phi <= PHI_L; pushing = PHI_L < phi <= PHI_G
+    let pinnedPhi = -9; stations.forEach(s => { const ph = wrapLobe(s.th - psi); if (ph <= PHI_L && ph > pinnedPhi) pinnedPhi = ph; });
+    let nPush = 0;
+    stations.forEach(s => {
+      const ph = wrapLobe(s.th - psi);
+      const gap = P.D - fold(P.RC * Math.cos(ph));
+      s.mov.position.z = gap;
+      const pushing = ph > PHI_L && ph <= PHI_G, pinned = Math.abs(ph - pinnedPhi) < 1e-6;
+      if (pushing && s.side > 0) nPush++;
+      s.dMat.emissive = pushing ? glow : dark; s.dMat.emissiveIntensity = pushing ? 0.9 : 0;
+      s.pad.material.color = pinned ? redPad : greyPad;
+      s.lock.material.emissive = (pushing || pinned) ? glow : dark; s.lock.material.emissiveIntensity = (pushing || pinned) ? 0.5 : 0;
+    });
+    const deg = x => ((x * 180 / Math.PI) % 360 + 360) % 360;
+    readout.textContent = "fold axis " + deg(psi).toFixed(0) + "° · output " + (alpha * 180 / Math.PI).toFixed(2) + "° · pushing per side: " + nPush;
+    resize(); controls.update(); renderer.render(scene, camera); requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
