@@ -1,0 +1,100 @@
+{
+ "K_NOM": 2.1052631578947367,
+ "PIV_Y": -1.9,
+ "Z_PIVOT": -7.0,
+ "Z_YOKE0": 3.95,
+ "Z_STACK_TOP": -7.0,
+ "Z_BASE_TOP": -25.0,
+ "parts": {
+  "push_stack": {
+   "group": "push",
+   "color": "#2f3a46",
+   "material": "3x3x18 multilayer stack, ~15 um / ~290 N",
+   "station": true
+  },
+  "stack_caps": {
+   "group": "push",
+   "color": "#a8b2bc",
+   "material": "Hardened end caps, spherical seat on top (drawn flat)",
+   "station": true
+  },
+  "ground_post": {
+   "group": "fixed",
+   "color": "#7e8a96",
+   "material": "Part of the monolithic stator (wire EDM)",
+   "station": true
+  },
+  "bell_crank": {
+   "group": "crank",
+   "color": "#4a7fb5",
+   "material": "Flexure bell-crank, ratio 2.1 (monolithic with stator)",
+   "station": true
+  },
+  "carriage_base": {
+   "group": "carriage",
+   "color": "#5d95cc",
+   "material": "Lower jaw, ceramic or carbide pad on rotor face",
+   "station": true
+  },
+  "preload_leaf": {
+   "group": "carriage",
+   "color": "#c0392b",
+   "material": "Preload flexure, ~100 N clamp",
+   "station": true
+  },
+  "clamp_stack": {
+   "group": "carriage",
+   "color": "#2f3a46",
+   "material": "2x3x5 multilayer stack, ~4 um / ~150 N",
+   "station": true
+  },
+  "yoke": {
+   "group": "yoke",
+   "color": "#5d95cc",
+   "material": "Yoke + upper jaw",
+   "station": true
+  },
+  "rotor": {
+   "group": "output",
+   "color": "#c9a24a",
+   "material": "Hardened, lapped both faces, \u00d812 x 2",
+   "station": false
+  },
+  "shaft": {
+   "group": "output",
+   "color": "#9aa4ad",
+   "material": "\u00d83, D-flat output",
+   "station": false
+  },
+  "base_plate": {
+   "group": "fixed",
+   "color": "#7e8a96",
+   "material": "Stator base (monolithic with posts)",
+   "station": false
+  },
+  "housing": {
+   "group": "housing",
+   "color": "#8592a0",
+   "material": "\u00d820 tube, 0.5 wall",
+   "station": false
+  },
+  "top_cap": {
+   "group": "housing",
+   "color": "#8592a0",
+   "material": "Bearing cap",
+   "station": false
+  },
+  "bearing_top": {
+   "group": "housing",
+   "color": "#555b62",
+   "material": "683ZZ 3x7x3",
+   "station": false
+  },
+  "bearing_bot": {
+   "group": "fixed",
+   "color": "#555b62",
+   "material": "683ZZ 3x7x3",
+   "station": false
+  }
+ }
+}

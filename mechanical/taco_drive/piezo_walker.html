@@ -1,0 +1,301 @@
+<title>Piezo Walker Rev C</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: single drawing-sheet column; animated 3D first, then numbers, speed-torque table, step sequence, amplifier, BOM, risks. */
+:root {
+  --bg: #f3f5f7;
+  --sheet: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6878;
+  --rule: #d6dde5;
+  --accent: #1f5fa8;
+  --warn: #a8551f;
+  --ok: #2f7a4a;
+  --view: #e7ecf1;
+  --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+    --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+  --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 36px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 34px/1.1 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 21px/1.25 var(--font-display); margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--font-body); margin: 14px 0 4px; }
+p { margin: 0 0 10px; max-width: 68ch; }
+.lede { color: var(--muted); max-width: 70ch; }
+section { min-width: 0; }
+.mono, td.n, .kv b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* viewer */
+.viewer { background: var(--view); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+#stage { width: 100%; aspect-ratio: 16 / 10; max-width: 100%; display: block; touch-action: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--rule); background: var(--sheet); font-size: 13px; }
+.controls button { font: 500 13px var(--font-body); padding: 5px 12px; border-radius: 4px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; }
+.controls button:focus-visible, .controls input:focus-visible, .controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.controls select { font: 13px var(--font-body); background: var(--bg); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
+.readout { margin-left: auto; font: 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.cap { font-size: 13px; color: var(--muted); padding: 8px 12px 12px; background: var(--sheet); margin: 0; max-width: none; }
+
+/* key numbers */
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.kv div { background: var(--sheet); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.kv span { font-size: 12px; color: var(--muted); }
+.kv b { font-size: 18px; font-weight: 500; }
+.kv b.warn { color: var(--warn); }
+.kv b.ok { color: var(--ok); }
+
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 12px var(--font-body); color: var(--muted); letter-spacing: .03em; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; white-space: nowrap; }
+tr.pick td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tag { display: inline-block; font: 500 11px var(--font-mono); padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.no { color: var(--muted); }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.two > * { min-width: 0; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } h1 { font-size: 28px; } .readout { margin-left: 0; width: 100%; } }
+ol, ul { margin: 0 0 10px; padding-left: 20px; max-width: 70ch; }
+li { margin-bottom: 5px; }
+.formula { font: 14px var(--font-mono); background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 12px; display: block; margin: 6px 0 12px; overflow-x: auto; white-space: pre; }
+code { font: 13px var(--font-mono); }
+.note { border-left: 3px solid var(--warn); padding: 4px 0 4px 12px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Piezo walking rotary actuator · Ø20 × 36.5 mm · 4 calipers · Rev C concept layout</div>
+    <h1>Piezo Walker Rev C</h1>
+    <p class="lede">Four piezo calipers grip a hardened Ø12 rotor and walk it round. Two calipers grip and push while the other two let go and step back, then they swap. Each clamp is held shut by a flexure spring and opened by its own small stack, so the rotor stays locked with the power off. Each push comes from an 18 mm stack standing along the shaft, amplified about 2× by a flexure bell-crank.</p>
+  </header>
+
+  <section class="viewer" aria-label="3D assembly">
+    <canvas id="stage"></canvas>
+    <div class="controls">
+      <button id="play" type="button">Pause</button>
+      <label for="speed">Cycle speed <input id="speed" type="range" min="0.05" max="2" step="0.05" value="0.5"></label>
+      <label for="exag">Motion ×<select id="exag"><option value="1">1 (true)</option><option value="40">40</option><option value="120" selected>120</option><option value="300">300</option></select></label>
+      <label for="housing"><input id="housing" type="checkbox"> Housing & cap</label>
+      <span class="readout" id="readout">—</span>
+    </div>
+    <p class="cap">Drag to orbit, scroll or pinch to zoom. Real motions are microns, so they are magnified (×120 by default); the rotor turn is magnified by the same factor. Blue: calipers and bell-cranks. Dark: piezo stacks; they glow when energised. Red: preload leaves. Gold: rotor. Phase A is the pair at 0° and 180°, phase B the pair at 90° and 270°.</p>
+  </section>
+
+  <section>
+    <h2>Key numbers</h2>
+    <div class="kv">
+      <div><span>Package</span><b>Ø20 × 36.5 mm</b></div>
+      <div><span>Grip torque (2 calipers, μ 0.3, 100 N)</span><b class="ok">0.62 N·m</b></div>
+      <div><span>Holding with power off</span><b class="ok">yes, 4 calipers</b></div>
+      <div><span>Bell-crank ratio (4.0 / 1.9 mm)</span><b>2.1</b></div>
+      <div><span>Step, no load / full load</span><b>24 / 10 µm</b></div>
+      <div><span>Speed at 1 kHz, no load</span><b>43 rpm</b></div>
+      <div><span>Speed at 1 kHz, full torque</span><b class="warn">18 rpm</b></div>
+      <div><span>Wind-up at full torque</span><b>0.19°</b></div>
+      <div><span>Clamp stack margin over preload</span><b class="warn">1.5×</b></div>
+      <div><span>Drive channels</span><b>4</b></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the amplifier buys</h2>
+    <p>Step size per pushing leg, and rotor speed at 1 kHz, against output torque. Two legs push at a time, at a 5.2 mm contact radius. Stack: 3×3×18 mm, about 15 µm free stroke and 290 N blocking; 75% flexure efficiency on the ratio.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Torque</th><th>Force per leg</th><th>Direct (no amplifier)</th><th>Bell-crank k 2.1 (this design)</th><th>k 3</th></tr></thead>
+      <tbody>
+        <tr><td class="n">0 N·m</td><td class="n">0 N</td><td class="n">15.0 µm · 28 rpm</td><td class="n"><b>23.6 µm · 43 rpm</b></td><td class="n">33.8 µm · 62 rpm</td></tr>
+        <tr><td class="n">0.21</td><td class="n">20</td><td class="n">14.0 · 26</td><td class="n"><b>19.1 · 35</b></td><td class="n">24.4 · 45</td></tr>
+        <tr><td class="n">0.42</td><td class="n">40</td><td class="n">12.9 · 24</td><td class="n"><b>14.5 · 27</b></td><td class="n">15.1 · 28</td></tr>
+        <tr><td class="n">0.52</td><td class="n">50</td><td class="n">12.4 · 23</td><td class="n"><b>12.2 · 22</b></td><td class="n">10.5 · 19</td></tr>
+        <tr><td class="n">0.62</td><td class="n">60</td><td class="n">11.9 · 22</td><td class="n"><b>9.9 · 18</b></td><td class="n">5.8 · 11</td></tr>
+      </tbody>
+    </table></div>
+    <p style="margin-top:10px">Amplification trades force for stroke. It makes the actuator 1.5–2× faster below half torque. At full torque it's slightly slower than a direct push, because a 3×3 mm stack only has about 290 N to trade. To be faster at full torque the push stacks need more cross-section, and there's no room for that in Ø20 with four stations. The other ways to go faster are a higher step rate (small stacks run comfortably at 2–5 kHz, which multiplies these speeds) or a longer package with a second rotor.</p>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>One step</h2>
+      <ol>
+        <li>A holds the rotor. B's clamp stacks open their jaws.</li>
+        <li>A's push stacks extend. The bell-cranks swing A's calipers sideways and the rotor turns with them. At the same time B's opened calipers swing back the other way.</li>
+        <li>B's clamp stacks switch off and the preload leaves close B's jaws on the rotor.</li>
+        <li>A's clamp stacks open A's jaws. B now repeats the push while A steps back.</li>
+      </ol>
+      <p>A pair always closes before the other pair opens, so the rotor is never free. Each clamp's force closes inside its own caliper: the upper jaw, rotor and lower jaw form one loop, so the bearings carry no clamp load.</p>
+    </div>
+    <div>
+      <h2>Why a bell-crank, not a diamond</h2>
+      <p>A diamond (bridge) amplifier around the stack is the usual choice, but at a useful ratio it is about 10 mm wide. Four of them don't fit in a Ø20 circle. The bell-crank is a flexure lever: the stack lifts a 1.9 mm input arm, and a 4.0 mm output arm turns that into tangential motion of the caliper. It fits beside the stack in about 5.5 mm, and it can be cut into the same wire-EDM stator as the posts and hinges.</p>
+      <p>Not drawn yet: a parallel-leaf guide under each caliper, so it moves purely sideways, and spherical seats on the stack ends. Both are needed so the stacks only see axial load.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Bill of materials</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Part</th><th>Qty</th><th>Spec</th><th>Make</th></tr></thead>
+      <tbody>
+        <tr><td>Push stack 3 × 3 × 18 mm</td><td class="n">4</td><td>Multilayer, ~15 µm, ~290 N blocking, 100–120 V</td><td>Buy</td></tr>
+        <tr><td>Clamp stack 2 × 3 × 5 mm</td><td class="n">4</td><td>Multilayer, ~4 µm, ~150 N blocking</td><td>Buy</td></tr>
+        <tr><td>Stator: base, ground posts, bell-cranks</td><td class="n">1</td><td>One piece, Ti-6Al-4V or 17-4PH, wire EDM</td><td>EDM</td></tr>
+        <tr><td>Calipers: base, preload leaf, yoke</td><td class="n">4</td><td>17-4PH or spring steel, wire EDM; carbide or alumina jaw pads</td><td>EDM</td></tr>
+        <tr><td>Rotor Ø12 × 2</td><td class="n">1</td><td>Hardened steel 60+ HRC or ceramic-coated, both faces lapped flat to ~1 µm</td><td>Grind / lap</td></tr>
+        <tr><td>Shaft Ø3, bearings 683ZZ</td><td class="n">1 / 2</td><td>D-flat output</td><td>Buy / lathe</td></tr>
+        <tr><td>Housing tube Ø20 × 0.5, top cap</td><td class="n">1 / 1</td><td>Aluminium or titanium</td><td>Lathe</td></tr>
+        <tr><td>Driver</td><td class="n">1</td><td>4 channels, 0–120 V, ~1–5 kHz, charge recovery optional at this size</td><td>PCB</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Open risks, in the order to test them</h2>
+    <ol>
+      <li><b>Lost motion.</b> A 10–24 µm step leaves only a few microns for jaw compliance, pad deformation and the end-cap seats. Build one leg and measure the step under 60 N before anything else.</li>
+      <li><b>Clamp opening margin.</b> The clamp stack can only just open a 100 N preload (1.5× margin), and it needs to open about 2 µm beyond. Rotor thickness and jaw parallelism must be held to about a micron, or some calipers won't open.</li>
+      <li><b>Contact wear.</b> Each pad sees about 10⁸ cycles in 28 hours at 1 kHz. Pad material and rotor finish set the life.</li>
+      <li><b>Stiffness.</b> The amplified legs are softer (~3.4 N/µm at the caliper), giving 0.19° of wind-up at full torque. Closing all four calipers when holding stiffens it.</li>
+      <li><b>Heat at high step rates.</b> The stacks are small, so heat is modest at 1 kHz. At 3–5 kHz, check stack temperature.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Files</h2>
+    <p>In the repository under <code>mechanical/taco_drive/</code>: <code>sizing_revC.py</code> (step, speed and stiffness model), <code>cad_revC.py</code> (parametric CadQuery model, built in one station's local frame and repeated four times), <code>out_revC/piezo_walker_revC.step</code> (full assembly). The taco-fold designs, Revs A and B, are still in the same folder.</p>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/STLLoader.js"></script>
+<script>
+(function () {
+  const K = { PIV_Y: -1.9, Z_PIV: -7.0, ARM_OUT: 4.0, KN: 2.105, R: 5.2, STACK0: -24.7, STACK1: -7.3, STEP_UM: 10, LIFT_UM: 4 };
+  const ST = { push_stack: "push", stack_caps: "fixed", ground_post: "fixed", bell_crank: "crank",
+               carriage_base: "carriage", preload_leaf: "carriage", clamp_stack: "carriage", yoke: "yoke" };
+  const COL = { push_stack: "#2f3a46", stack_caps: "#a8b2bc", ground_post: "#7e8a96", bell_crank: "#4a7fb5",
+                carriage_base: "#5d95cc", preload_leaf: "#c0392b", clamp_stack: "#2f3a46", yoke: "#5d95cc",
+                rotor: "#c9a24a", shaft: "#9aa4ad", base_plate: "#7e8a96", housing: "#8592a0", top_cap: "#8592a0",
+                bearing_top: "#555b62", bearing_bot: "#555b62" };
+  const GL = { rotor: "output", shaft: "output", base_plate: "fixed", housing: "housing", top_cap: "housing", bearing_top: "housing", bearing_bot: "fixed" };
+
+  const canvas = document.getElementById("stage"), readout = document.getElementById("readout");
+  if (!window.THREE) { readout.textContent = "3D library failed to load"; return; }
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1.6, 0.5, 500);
+  camera.position.set(38, 30, 42);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.set(0, -6, 0); controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(30, 60, 25); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-40, -10, -30); scene.add(fill);
+
+  const world = new THREE.Group(); world.rotation.x = -Math.PI / 2; scene.add(world);
+  const output = new THREE.Group(), housing = new THREE.Group(); world.add(output); world.add(housing);
+  housing.visible = false;
+  const stations = [];
+  for (let k = 0; k < 4; k++) {
+    const g = new THREE.Group(); g.rotation.z = k * Math.PI / 2; world.add(g);
+    const pushG = new THREE.Group(); pushG.position.z = K.STACK0; g.add(pushG);          // scaled along z from its base
+    const pushInner = new THREE.Group(); pushInner.position.z = -K.STACK0; pushG.add(pushInner);
+    const crankP = new THREE.Group(); crankP.position.set(0, K.PIV_Y, K.Z_PIV); g.add(crankP); // pivot
+    const crankInner = new THREE.Group(); crankInner.position.set(0, -K.PIV_Y, -K.Z_PIV); crankP.add(crankInner);
+    const car = new THREE.Group(); g.add(car);
+    const yoke = new THREE.Group(); car.add(yoke);
+    stations.push({ g, pushG, pushInner, crankP, crankInner, car, yoke, mats: { push: [], clamp: [] } });
+  }
+
+  const b64 = s => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
+  const loader = new THREE.STLLoader();
+  const mat = (c, tr) => new THREE.MeshStandardMaterial({ color: c, metalness: 0.35, roughness: 0.5, transparent: !!tr, opacity: tr ? 0.3 : 1, depthWrite: !tr, side: THREE.DoubleSide });
+  fetch("assembly_meshes.json").then(r => r.json()).then(meshes => {
+    Object.entries(meshes).forEach(([name, data]) => {
+      const geo = loader.parse(b64(data)); geo.computeVertexNormals();
+      if (ST[name]) {
+        stations.forEach(s => {
+          const m = new THREE.Mesh(geo, mat(COL[name]));
+          const slot = { push: s.pushInner, fixed: s.g, crank: s.crankInner, carriage: s.car, yoke: s.yoke }[ST[name]];
+          slot.add(m);
+          if (name === "push_stack") s.mats.push.push(m.material);
+          if (name === "clamp_stack") s.mats.clamp.push(m.material);
+        });
+      } else {
+        const grp = GL[name] === "output" ? output : GL[name] === "housing" ? housing : world;
+        grp.add(new THREE.Mesh(geo, mat(COL[name], GL[name] === "housing" && name !== "bearing_top")));
+      }
+    });
+  }).catch(() => { readout.textContent = "Part meshes failed to load"; });
+
+  // index stripe on the rotor so its turn is visible
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.5, 0.05), new THREE.MeshBasicMaterial({ color: 0x1f5fa8 }));
+  stripe.position.set(3.2, 0, 1.03); output.add(stripe);
+
+  // ---- walking cycle -----------------------------------------------------------------
+  const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  // half-cycle h in [0,1): driver pair pushes 0.15..0.75; idle pair opens 0.05..0.15, returns 0.2..0.7, closes 0.8..0.9
+  function legState(h, driver) {
+    if (driver) return { push: ease((h - 0.15) / 0.6), open: 0, active: h >= 0.15 && h < 0.75 };
+    const open = h < 0.05 ? 0 : h < 0.15 ? ease((h - 0.05) / 0.1) : h < 0.8 ? 1 : 1 - ease((h - 0.8) / 0.1);
+    return { push: 1 - ease((h - 0.2) / 0.5), open, active: false };
+  }
+  let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const playBtn = document.getElementById("play");
+  playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.addEventListener("click", () => { playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; });
+  const speedEl = document.getElementById("speed"), exagEl = document.getElementById("exag"), housingEl = document.getElementById("housing");
+  housingEl.addEventListener("change", () => { housing.visible = housingEl.checked; });
+  const on = new THREE.Color("#ff7a1a"), off = new THREE.Color("#000000");
+
+  let t = 0.3, last = performance.now();
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
+    if (canvas.width !== Math.round(w * pr) || canvas.height !== Math.round(h * pr)) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  }
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (playing) t += dt * parseFloat(speedEl.value);
+    const X = parseFloat(exagEl.value), step = K.STEP_UM * 1e-3 * X, lift = K.LIFT_UM * 1e-3 * X;
+    const n = Math.floor(t * 2), h = t * 2 - n, phaseA = n % 2 === 0;
+    stations.forEach((s, k) => {
+      const isA = k % 2 === 0, st = legState(h, isA === phaseA);
+      const d = st.push * step;                                  // tangential carriage travel (local -Y)
+      s.car.position.y = -d;
+      s.yoke.position.z = st.open * lift;
+      s.crankP.rotation.x = d / K.ARM_OUT;                      // bell-crank swing
+      s.pushG.scale.z = 1 + (d / K.KN) / (K.STACK1 - K.STACK0);  // stack growth = output / ratio
+      s.mats.push.forEach(m => { m.emissive = st.active ? on : off; m.emissiveIntensity = st.active ? 0.8 : 0; });
+      s.mats.clamp.forEach(m => { m.emissive = st.open > 0.01 ? on : off; m.emissiveIntensity = st.open > 0.01 ? 0.8 : 0; });
+    });
+    const turns = n + ease((h - 0.15) / 0.6);                    // completed half-cycles
+    output.rotation.z = -turns * step / K.R;
+    const trueDeg = turns * K.STEP_UM * 1e-3 / K.R * 180 / Math.PI;
+    readout.textContent = (phaseA ? "A grips & pushes · B steps back" : "B grips & pushes · A steps back") +
+      " · rotor " + trueDeg.toFixed(3) + "° true";
+    resize(); controls.update(); renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
