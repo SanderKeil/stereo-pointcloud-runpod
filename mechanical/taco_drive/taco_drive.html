@@ -1,0 +1,384 @@
+<title>Taco Drive Rev B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: single drawing-sheet column; 3D assembly first, then forces, station detail, stack-up, BOM and risks. */
+:root {
+  --bg: #f3f5f7;
+  --sheet: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6878;
+  --rule: #d6dde5;
+  --accent: #1f5fa8;
+  --warn: #a8551f;
+  --ok: #2f7a4a;
+  --view: #e7ecf1;
+  --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+    --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+  --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 36px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 34px/1.1 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 21px/1.25 var(--font-display); margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--font-body); margin: 14px 0 4px; }
+p { margin: 0 0 10px; max-width: 68ch; }
+.lede { color: var(--muted); max-width: 70ch; }
+section { min-width: 0; }
+.mono, td.n, .kv b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* viewer */
+.viewer { background: var(--view); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+#stage { width: 100%; aspect-ratio: 16 / 10; max-width: 100%; display: block; touch-action: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--rule); background: var(--sheet); font-size: 13px; }
+.controls button { font: 500 13px var(--font-body); padding: 5px 12px; border-radius: 4px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; }
+.controls button:focus-visible, .controls input:focus-visible, .controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.controls select { font: 13px var(--font-body); background: var(--bg); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
+.readout { margin-left: auto; font: 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.cap { font-size: 13px; color: var(--muted); padding: 8px 12px 12px; background: var(--sheet); margin: 0; max-width: none; }
+
+/* key numbers */
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.kv div { background: var(--sheet); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.kv span { font-size: 12px; color: var(--muted); }
+.kv b { font-size: 18px; font-weight: 500; }
+.kv b.warn { color: var(--warn); }
+.kv b.ok { color: var(--ok); }
+
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 12px var(--font-body); color: var(--muted); letter-spacing: .03em; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; white-space: nowrap; }
+tr.pick td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tag { display: inline-block; font: 500 11px var(--font-mono); padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.no { color: var(--muted); }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.two > * { min-width: 0; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } h1 { font-size: 28px; } .readout { margin-left: 0; width: 100%; } }
+ol, ul { margin: 0 0 10px; padding-left: 20px; max-width: 70ch; }
+li { margin-bottom: 5px; }
+.formula { font: 14px var(--font-mono); background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 12px; display: block; margin: 6px 0 12px; overflow-x: auto; white-space: pre; }
+code { font: 13px var(--font-mono); }
+.note { border-left: 3px solid var(--warn); padding: 4px 0 4px 12px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Friction wave drive · 2 × Ø100 back to back · 140:1 · Rev B concept layout</div>
+    <h1>Taco Drive Rev B</h1>
+    <p class="lede">Two flat spring-steel discs sit on one output shaft, either side of a stator. Twelve stations around the stator each have one coil and two plungers, one above disc 1 and one below disc 2. When a coil fires, it pulls both plungers toward the stator and pinches each disc's rim onto a pole face, folding both discs like a taco about the same axis. Stepping the active pair around the ring turns the fold axis, and both discs creep forward together.</p>
+  </header>
+
+  <section class="viewer" aria-label="3D assembly">
+    <canvas id="stage"></canvas>
+    <div class="controls">
+      <button id="play" type="button">Pause</button>
+      <label for="speed">Step rate <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1"></label>
+      <label for="ratio">Output shown at <select id="ratio"><option value="10">10:1 (demo)</option><option value="140">140:1 (true)</option></select></label>
+      <label for="housing"><input id="housing" type="checkbox"> Covers & walls</label>
+      <label for="stator"><input id="stator" type="checkbox" checked> Stator plate</label>
+      <span class="readout" id="readout">—</span>
+    </div>
+    <p class="cap">Drag to orbit, scroll or pinch to zoom. Copper coils light up when energised. Blue: plungers (armature pads), riding on the discs. Grey: stator, soft-iron posts, hubs and shaft. The yellow stripe marks one spot on each disc. Each half-step runs: the next pair pulls in and lands with the fold axis 7° past the holding pair, then the holding pair lets go and the axis jumps to the new pair.</p>
+  </section>
+
+  <section>
+    <h2>Key numbers</h2>
+    <div class="kv">
+      <div><span>Ratio, i = r<sub>c</sub>/Δx</span><b>140 : 1</b></div>
+      <div><span>Discs</span><b>2 × 0.15 mm 17-7PH</b></div>
+      <div><span>Rim drop δ (hub shims)</span><b>4.41 mm</b></div>
+      <div><span>Peak bending stress</span><b class="warn">±331 MPa</b></div>
+      <div><span>Coil, per station</span><b>245 t · 0.83 A</b></div>
+      <div><span>Pole flux density, clamped</span><b>1.1 T</b></div>
+      <div><span>Clamp force per pad</span><b>27 N</b></div>
+      <div><span>Pull-in at 0.2 mm (2× boost)</span><b>1.8 N (7.0 N)</b></div>
+      <div><span>Slip torque, one pair per disc</span><b class="ok">2.4 N·m</b></div>
+      <div><span>Coil power, per active coil</span><b>1.2 W</b></div>
+      <div><span>Current rise at 24 V</span><b>0.63 ms</b></div>
+      <div><span>Design speed</span><b>10 rpm out</b></div>
+    </div>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>Where the forces go</h2>
+      <p>Every large force closes inside the station or the shaft. The bearings and housing only carry torque and small follower-spring loads.</p>
+      <ul>
+        <li><b>Magnet pull.</b> One coil drives a single flux loop: up post a, through the top pad, down post b, through the bottom pad, back to post a. Both pads carry the same flux, so their pulls on the stator are equal and opposite, and the stator sees no net force.</li>
+        <li><b>Clamp.</b> Each pad pinches its disc against its own pole face. The 27 N on the top face and the 27 N on the bottom face cancel in the same posts.</li>
+        <li><b>Sheet spring-back.</b> Disc 1 pushes its hub up and disc 2 pushes its hub down, by about 6 N each. Both hubs are on one shaft, so the shaft carries it in tension.</li>
+        <li><b>Follower springs.</b> These push down on the top cover and up on the bottom cover, about 0.3 N per plunger. That load closes through the walls.</li>
+      </ul>
+      <p>The discs are driven by the same coils, so they always fold together and drive the shaft in the same direction. Torque doubles compared with one disc.</p>
+    </div>
+    <div>
+      <h2>Why the plungers ride on the sheet</h2>
+      <p>The fold travels around, so each pad position moves 4.4 mm up and down every wave revolution. If the plungers sprang back to a fixed stop, the magnet would have to pull across that full 4.4 mm gap, the same weakness the electromagnet version had.</p>
+      <p>Instead, a light spring (≈0.3 N) keeps each plunger resting on its disc. When the fold sits on one station, its neighbour 30° away is only 0.2 mm above its pole. The coil therefore only has to close 0.2 mm, then hold at a ~0.03 mm residual gap. That is why 200 ampere-turns gives 27 N.</p>
+      <h3>Hand-off without scrub</h3>
+      <p>In the Rev A notes I said discrete clamps force a scrub at every hand-off. That only happens if the fold axis moves while two pairs are both pinned, and the right sequence avoids it:</p>
+      <ol>
+        <li>Pair A holds. Pair B fires and pulls its rim down; the disc pivots freely about A.</li>
+        <li>B lands when the axis is about 7° past A. Both pairs hold, and nothing moves.</li>
+        <li>A lets go, and the axis swings over to B while B holds the disc.</li>
+      </ol>
+      <p>The disc always moves with only one pair pinned. The drive steps rather than glides: each hand-off moves the output about 0.21°.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Station detail</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Item</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Pole faces</td><td class="mono">2 × 7 × 4 mm per pad</td><td>Radial span r 46–50, the flat land under the clamp. 0.3 mm proud of the stator, nitrocarburised for wear</td></tr>
+        <tr><td>Post pitch / pad length</td><td class="mono">11.5 / 18.5 mm</td><td>Station pitch at r 48 is 25.1 mm, leaving 2.6 mm between the coil and the next post b</td></tr>
+        <tr><td>Coil window</td><td class="mono">4 × 14 mm</td><td>245 turns Ø0.40 mm, 1.74 Ω, 9 mH; rise to 2× current in 0.6 ms at 24 V</td></tr>
+        <tr><td>Magnetic gaps in the loop</td><td class="mono">4 faces × 0.03 mm</td><td>The sheet is 17-7PH, which is ferromagnetic, so it is not part of the gap. Some flux shunts in-plane through the sheet between posts a and b, but it saturates at about 6% of the loop flux</td></tr>
+        <tr><td>Stator plate</td><td class="mono">Ø124 × 16, 6061</td><td>Slit from each pocket to the OD so the aluminium does not form a shorted turn around a post. Posts and coils potted in epoxy</td></tr>
+        <tr><td>Plunger</td><td class="mono">4 g, Ø3 stem</td><td>Bronze bush in the cover; 0.3 N follower gives 75 m/s² against 47 m/s² needed at 10 rpm out</td></tr>
+        <tr><td>Steps</td><td class="mono">280 hand-offs/s</td><td>At 10 rpm out: 23 wave revolutions per second, 12 pair-to-pair hand-offs each</td></tr>
+        <tr><td>Drive power</td><td class="mono">2.4–4.8 W</td><td>2 coils on while one pair holds, 4 during each hand-off</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Stack-up</h2>
+    <p>Datum z = 0 is the stator mid-plane, and the layout is mirror-symmetric about it. Each disc's ratio is set by its hub height above its pole faces, so each side gets its own hub shim. Match the two sides to within 0.01 mm (about 0.6 on the ratio). Any small mismatch left is absorbed elastically and reset at every step, because each step re-grips.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Feature</th><th>z (mm)</th><th>Controls</th></tr></thead>
+      <tbody>
+        <tr><td>Top cover with 12 guide bushes, encoder</td><td class="n">+24 … +28</td><td>AS5047P over a magnet on the shaft end, for closed-loop stepping</td></tr>
+        <tr><td>Plunger travel (pad underside)</td><td class="n">+8.45 … +12.86</td><td>Rides on disc 1</td></tr>
+        <tr><td>Disc 1 at the hub</td><td class="n">+12.71</td><td>Hub height above the pole plane = δ, set by hub shim</td></tr>
+        <tr><td><b>Top pole-face plane</b></td><td class="n"><b>+8.30</b></td><td>Lapped flat across all 24 posts after potting</td></tr>
+        <tr><td>Stator with 2× 6800 bearings</td><td class="n">−8 … +8</td><td>Posts run straight through and stand 0.3 mm proud of each face</td></tr>
+        <tr><td><b>Bottom pole-face plane</b></td><td class="n"><b>−8.30</b></td><td>Mirror</td></tr>
+        <tr><td>Disc 2, plungers, bottom cover</td><td class="n">−12.71 … −28</td><td>Mirror; output shaft Ø10 with D-flat exits the bottom</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Bill of materials</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Part</th><th>Qty</th><th>Material / spec</th><th>Make</th></tr></thead>
+      <tbody>
+        <tr><td>Flex disc Ø100</td><td class="n">2</td><td>17-7PH (1.4568) CH900, 0.15 mm, ferromagnetic. Edges polished</td><td>Photo-etch</td></tr>
+        <tr><td>Stator plate</td><td class="n">1</td><td>6061-T6, 12 pockets, slit per station</td><td>Mill</td></tr>
+        <tr><td>Pole posts 7 × 4 × 16.6</td><td class="n">24</td><td>Soft iron 1.1003 (or SMC for faster response), faces nitrocarburised</td><td>Wire EDM / grind</td></tr>
+        <tr><td>Coils</td><td class="n">12</td><td>245 turns Ø0.40 enamelled Cu on a bobbin around post a</td><td>Wind</td></tr>
+        <tr><td>Plunger: armature pad 18.5 × 4 × 6 + Ø3 stem</td><td class="n">24</td><td>1.1003 nitrided pad; hardened stem</td><td>Mill / EDM</td></tr>
+        <tr><td>Follower springs</td><td class="n">24</td><td>OD 5.2, ≈0.3 N over the 4.4 mm travel (low rate)</td><td>Buy</td></tr>
+        <tr><td>Guide bushes Ø5/Ø3 × 4</td><td class="n">24</td><td>Sintered bronze</td><td>Buy</td></tr>
+        <tr><td>Hubs, clamp washers, hub shims</td><td class="n">2 / 2 / set</td><td>17-4PH H900; shim washers 0.01–0.5</td><td>Lathe</td></tr>
+        <tr><td>Shaft Ø10</td><td class="n">1</td><td>Hardened, ground; D-flat output, magnet end</td><td>Lathe</td></tr>
+        <tr><td>Walls, covers</td><td class="n">2 / 2</td><td>6061-T6</td><td>Lathe / mill</td></tr>
+        <tr><td>Bearings 6800-2RS</td><td class="n">2</td><td>In the stator; axial load is near zero</td><td>Buy</td></tr>
+        <tr><td>Driver</td><td class="n">1</td><td>12 half-bridges, 24 V, current-controlled (boost then hold), with encoder feedback</td><td>PCB</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Open risks, in the order to test them</h2>
+    <ol>
+      <li><b>Fold shape with riding plungers.</b> Ten idle plungers press on each disc at about 0.3 N each, and that pushes the sheet slightly toward compound bending. Measure the shape with the follower springs fitted, and use the lightest springs that still follow at speed.</li>
+      <li><b>Pull-in and hold, measured.</b> Build one station with two short strips of disc material and check the 27 N clamp and the pull from 0.2 mm before cutting the full stator. Flatness of the pole faces after lapping is what decides the residual gap.</li>
+      <li><b>Fatigue.</b> Unchanged from Rev A: ±331 MPa per cycle. Check that 17-7PH CH900 foil has the same fatigue margin as 1.4310.</li>
+      <li><b>Friction and pole wear.</b> Both faces of each pad grip the sheet. Nitrided iron on 17-7PH needs a μ measurement and a wear test.</li>
+      <li><b>No holding at power-off.</b> With the magnets applying the clamp, the output freewheels when unpowered. A small permanent magnet in each post would bias the clamp on, with the coil cancelling it to release, but that complicates the driver. The other route, strong springs applying the clamp and magnets releasing it, would need the magnets to hold 10 of 12 stations open across up to 4.4 mm.</li>
+      <li><b>Step rate and noise.</b> 280 hand-offs per second at 10 rpm out. Check for audible ticking and pad bounce, and use current shaping on landing.</li>
+      <li><b>Patent check.</b> Electromagnets moving a flexible disc for a friction output are close to Genesis's wave-actuator family. The single-curvature fold, the riding plungers and the back-to-back flux loop are the distinguishing features. Get a professional opinion.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Files</h2>
+    <p>In the repository under <code>mechanical/taco_drive/</code>: <code>sizing_revB.py</code> (magnetic circuit, torque, power, speed), <code>cad_revB.py</code> (parametric CadQuery model) and <code>out_revB/taco_drive_revB.step</code> (full assembly, all 24 plungers and 12 stations). Rev A, the roller version, is still in <code>cad.py</code> and <code>out/</code>.</p>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const P = { R0: 50, RH: 12, L: 34, DELTA: 4.41, T: 0.15, RC: 48, ZH: 12.71, N: 12 };
+  const PARTS = {
+    stator: ["stator", "#8592a0"], posts: ["station", "#4b5560"], coil: ["station", "#b8742a"],
+    plunger: ["plunger", "#5d95cc"], follower_spring: ["plunger", "#c0392b"],
+    hub_top: ["output", "#9aa4ad"], hub_bot: ["output", "#9aa4ad"], hub_shim_top: ["output", "#d97a3a"], hub_shim_bot: ["output", "#d97a3a"],
+    clamp_washer_top: ["output", "#b8c0c8"], clamp_washer_bot: ["output", "#b8c0c8"], shaft: ["output", "#9aa4ad"], encoder_magnet: ["output", "#7a3fb0"],
+    wall_top: ["housing", "#8592a0"], wall_bot: ["housing", "#8592a0"], cage_top: ["housing", "#6b7680"], cage_bot: ["housing", "#6b7680"],
+    bearing_top: ["fixed", "#555b62"], bearing_bot: ["fixed", "#555b62"]
+  };
+  const canvas = document.getElementById("stage");
+  const readout = document.getElementById("readout");
+  if (!window.THREE) { readout.textContent = "3D library failed to load"; return; }
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1.6, 1, 2000);
+  camera.position.set(160, 110, 175);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.set(0, 0, 0); controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(80, 160, 60); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-120, -60, -80); scene.add(fill);
+
+  const world = new THREE.Group(); world.rotation.x = -Math.PI / 2; scene.add(world);
+  const G = { fixed: new THREE.Group(), stator: new THREE.Group(), output: new THREE.Group(), housing: new THREE.Group() };
+  Object.values(G).forEach(g => world.add(g));
+  G.housing.visible = false;
+
+  const coilMats = [], plungers = [];   // plungers: {obj, k, side}
+  const b64ToBuf = s => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
+  const loader = new THREE.STLLoader();
+  fetch("assembly_meshes.json").then(r => r.json()).then(meshes => {
+    Object.entries(PARTS).forEach(([name, [grp, col]]) => {
+      if (!meshes[name]) return;
+      const geo = loader.parse(b64ToBuf(meshes[name])); geo.computeVertexNormals();
+      const transparent = grp === "housing";
+      const mk = () => new THREE.MeshStandardMaterial({ color: col, metalness: 0.35, roughness: 0.55, transparent,
+        opacity: transparent ? 0.35 : 1, depthWrite: !transparent, side: THREE.DoubleSide });
+      if (grp === "station") {
+        for (let k = 0; k < P.N; k++) {
+          const m = new THREE.Mesh(geo, mk()); m.rotation.z = 2 * Math.PI * k / P.N; G.fixed.add(m);
+          if (name === "coil") coilMats[k] = m.material;
+        }
+      } else if (grp === "plunger") {
+        for (let k = 0; k < P.N; k++) for (const side of [1, -1]) {
+          const holder = new THREE.Group(); holder.rotation.z = 2 * Math.PI * k / P.N; holder.scale.z = side;
+          const inner = new THREE.Group(); inner.add(new THREE.Mesh(geo, mk())); holder.add(inner);
+          G.fixed.add(holder); plungers.push({ inner, k, part: name });
+        }
+      } else {
+        G[grp].add(new THREE.Mesh(geo, mk()));
+      }
+    });
+  }).catch(() => { readout.textContent = "Part meshes failed to load"; });
+
+  // ---- procedural discs (shared geometry, bottom one mirrored) --------------------------
+  const NR = 46, NT = 240, RIN = 5.1;
+  const nV = (NR + 1) * (NT + 1);
+  const pos = new Float32Array(nV * 3 * 2), colors = new Float32Array(nV * 3 * 2), base = [];
+  for (let side = 0; side < 2; side++)
+    for (let i = 0; i <= NR; i++) for (let j = 0; j <= NT; j++) {
+      const r = RIN + (P.R0 - RIN) * i / NR, th = 2 * Math.PI * j / NT;
+      base.push([r, th, side]);
+      const k = (side * nV + i * (NT + 1) + j) * 3;
+      const stripe = (th < 0.035 || th > 2 * Math.PI - 0.035) && r > 14;
+      const c = new THREE.Color(stripe ? "#f2c230" : "#cfd6dd");
+      colors[k] = c.r; colors[k + 1] = c.g; colors[k + 2] = c.b;
+    }
+  const idx = [];
+  for (let side = 0; side < 2; side++) { const o = side * nV;
+    for (let i = 0; i < NR; i++) for (let j = 0; j < NT; j++) {
+      const a = o + i * (NT + 1) + j, b = a + 1, c = a + NT + 1, d = c + 1;
+      if (side === 0) idx.push(a, c, b, b, c, d); else idx.push(a, b, c, b, d, c);
+    } }
+  const dgeo = new THREE.BufferGeometry();
+  dgeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  dgeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  dgeo.setIndex(idx);
+  const dmat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.5, roughness: 0.35, side: THREE.DoubleSide });
+  for (const side of [1, -1]) {
+    const g = new THREE.Group(); g.scale.z = side;
+    const m = new THREE.Mesh(dgeo, dmat); m.position.z = P.ZH; g.add(m); world.add(g);
+  }
+
+  function fold(u) {
+    const a = Math.abs(u);
+    if (a <= P.RH) return 0;
+    const q = Math.min(a - P.RH, P.L) / P.L;
+    return P.DELTA * (3 * q * q - 2 * q * q * q);
+  }
+  function updateDisc(psi, alpha) {
+    const ca = Math.cos(psi), sa = Math.sin(psi);
+    for (let v = 0; v < base.length; v++) {
+      const [r, th, side] = base[v], phi = th + alpha;
+      const x = r * Math.cos(phi), y = r * Math.sin(phi);
+      const k = v * 3; pos[k] = x; pos[k + 1] = y; pos[k + 2] = -fold(x * ca + y * sa) + (side ? P.T : 0);
+    }
+    dgeo.attributes.position.needsUpdate = true; dgeo.computeVertexNormals();
+  }
+
+  // ---- stepping sequence ---------------------------------------------------------------
+  const STEP = Math.PI / 6, LAND = 7 * Math.PI / 180;
+  const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  function state(t) {                 // t in half-steps
+    const n = Math.floor(t), u = t - n;
+    const p = ((n % 6) + 6) % 6, q = (p + 1) % 6;
+    let psi = n * STEP, on = [p];
+    if (u < 0.35) { psi += LAND * ease(u / 0.35); on = [p, q]; }
+    else if (u < 0.5) { psi += LAND; on = [p, q]; }
+    else if (u < 0.85) { psi += LAND + (STEP - LAND) * ease((u - 0.5) / 0.35); on = [q]; }
+    else { psi += STEP; on = [q]; }
+    return { psi, on };
+  }
+  const NAMES = "ABCDEF";
+
+  let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const playBtn = document.getElementById("play");
+  playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.addEventListener("click", () => { playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; });
+  const speedEl = document.getElementById("speed"), ratioEl = document.getElementById("ratio");
+  const housingEl = document.getElementById("housing"), statorEl = document.getElementById("stator");
+  housingEl.addEventListener("change", () => { G.housing.visible = housingEl.checked; });
+  statorEl.addEventListener("change", () => { G.stator.visible = statorEl.checked; });
+
+  let t = 0, last = performance.now();
+  const coilOff = new THREE.Color("#000000"), coilOn = new THREE.Color("#ff7a1a");
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
+    if (canvas.width !== Math.round(w * pr) || canvas.height !== Math.round(h * pr)) {
+      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+  }
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (playing) t += dt * 0.8 * parseFloat(speedEl.value);
+    const { psi, on } = state(t);
+    const alpha = psi / parseFloat(ratioEl.value);
+    G.output.rotation.z = alpha;
+    updateDisc(psi, alpha);
+    const active = new Set(); on.forEach(p => { active.add(p); active.add(p + 6); });
+    coilMats.forEach((m, k) => { if (m) { m.emissive = active.has(k) ? coilOn : coilOff; m.emissiveIntensity = active.has(k) ? 0.9 : 0; } });
+    plungers.forEach(pl => {
+      const th = 2 * Math.PI * pl.k / P.N;
+      const lift = active.has(pl.k) ? 0 : P.DELTA - fold(P.RC * Math.cos(th - psi));
+      if (pl.part === "follower_spring") { pl.inner.position.z = 0; } else pl.inner.position.z = lift;
+    });
+    const deg = x => ((x * 180 / Math.PI) % 360 + 360) % 360;
+    readout.textContent = "clamped " + on.map(p => NAMES[p] + "/" + NAMES[p] + "′").join(" + ") +
+      " · axis " + deg(psi).toFixed(0) + "° · output " + (alpha * 180 / Math.PI).toFixed(2) + "°";
+    resize(); controls.update(); renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

@@ -1,0 +1,140 @@
+{
+ "params": {
+  "T": 0.15,
+  "DELTA": 4.41,
+  "ZP": 8.3,
+  "Z_HUB": 12.71,
+  "PAD_L": 18.5,
+  "A_OFF": -5.75,
+  "B_OFF": 5.75,
+  "H": 16.0
+ },
+ "parts": {
+  "stator": {
+   "group": "fixed",
+   "color": "#8592a0",
+   "material": "6061-T6, slit at each station (no shorted turn); posts and coils potted in",
+   "qty": 1
+  },
+  "posts": {
+   "group": "station",
+   "color": "#4b5560",
+   "material": "Soft iron 1.1003 (or SMC), pole faces nitrocarburised, 2 per station",
+   "qty": 24
+  },
+  "coil": {
+   "group": "station",
+   "color": "#b8742a",
+   "material": "~245 turns \u00d80.40 enamelled Cu on post a",
+   "qty": 12
+  },
+  "plunger": {
+   "group": "plunger",
+   "color": "#5d95cc",
+   "material": "Armature pad 1.1003 nitrided + \u00d83 stem, 4 g",
+   "qty": 24
+  },
+  "follower_spring": {
+   "group": "plunger",
+   "color": "#c0392b",
+   "material": "Compression spring OD5.2, ~0.3 N preload",
+   "qty": 24
+  },
+  "hub_top": {
+   "group": "output",
+   "color": "#9aa4ad",
+   "material": "17-4PH H900, clamp face lapped, R2 relief",
+   "qty": 1
+  },
+  "hub_shim_top": {
+   "group": "output",
+   "color": "#d97a3a",
+   "material": "Shim washers: set delta per side (ratio match)",
+   "qty": 1
+  },
+  "clamp_washer_top": {
+   "group": "output",
+   "color": "#b8c0c8",
+   "material": "Hardened steel 2.5",
+   "qty": 1
+  },
+  "wall_top": {
+   "group": "housing",
+   "color": "#8592a0",
+   "material": "6061-T6 spacer ring",
+   "qty": 1
+  },
+  "cage_top": {
+   "group": "housing",
+   "color": "#6b7680",
+   "material": "6061-T6 cover + 12 bronze guide bushes",
+   "qty": 1
+  },
+  "disc_top": {
+   "group": "disc",
+   "color": "#d0d6dc",
+   "material": "17-7PH (1.4568) CH900, 0.15, photo-etched",
+   "qty": 1
+  },
+  "hub_bot": {
+   "group": "output",
+   "color": "#9aa4ad",
+   "material": "17-4PH H900, clamp face lapped, R2 relief",
+   "qty": 1
+  },
+  "hub_shim_bot": {
+   "group": "output",
+   "color": "#d97a3a",
+   "material": "Shim washers: set delta per side (ratio match)",
+   "qty": 1
+  },
+  "clamp_washer_bot": {
+   "group": "output",
+   "color": "#b8c0c8",
+   "material": "Hardened steel 2.5",
+   "qty": 1
+  },
+  "wall_bot": {
+   "group": "housing",
+   "color": "#8592a0",
+   "material": "6061-T6 spacer ring",
+   "qty": 1
+  },
+  "cage_bot": {
+   "group": "housing",
+   "color": "#6b7680",
+   "material": "6061-T6 cover + 12 bronze guide bushes",
+   "qty": 1
+  },
+  "disc_bot": {
+   "group": "disc",
+   "color": "#d0d6dc",
+   "material": "17-7PH (1.4568) CH900, 0.15, photo-etched",
+   "qty": 1
+  },
+  "shaft": {
+   "group": "output",
+   "color": "#9aa4ad",
+   "material": "\u00d810 output shaft, D-flat bottom, encoder end top",
+   "qty": 1
+  },
+  "encoder_magnet": {
+   "group": "output",
+   "color": "#7a3fb0",
+   "material": "Diametric magnet \u00d86 for AS5047P on the top cover",
+   "qty": 1
+  },
+  "bearing_top": {
+   "group": "fixed",
+   "color": "#555b62",
+   "material": "6800-2RS",
+   "qty": 1
+  },
+  "bearing_bot": {
+   "group": "fixed",
+   "color": "#555b62",
+   "material": "6800-2RS",
+   "qty": 1
+  }
+ }
+}
