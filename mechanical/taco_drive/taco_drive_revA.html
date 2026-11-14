@@ -1,0 +1,356 @@
+<title>Taco Drive Rev A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: single drawing-sheet column; 3D assembly first, then the numbers, decisions, BOM and risks. */
+:root {
+  --bg: #f3f5f7;
+  --sheet: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6878;
+  --rule: #d6dde5;
+  --accent: #1f5fa8;
+  --warn: #a8551f;
+  --ok: #2f7a4a;
+  --view: #e7ecf1;
+  --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+    --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --sheet: #182029; --ink: #e3e9ef; --muted: #96a3b2; --rule: #2a3542;
+  --accent: #6aa6ec; --warn: #e39a62; --ok: #6cc28c; --view: #0d1217; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 36px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 34px/1.1 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 21px/1.25 var(--font-display); margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--font-body); margin: 14px 0 4px; }
+p { margin: 0 0 10px; max-width: 68ch; }
+.lede { color: var(--muted); max-width: 70ch; }
+section { min-width: 0; }
+.mono, td.n, .kv b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* viewer */
+.viewer { background: var(--view); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+#stage { width: 100%; aspect-ratio: 16 / 10; max-width: 100%; display: block; touch-action: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--rule); background: var(--sheet); font-size: 13px; }
+.controls button { font: 500 13px var(--font-body); padding: 5px 12px; border-radius: 4px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; }
+.controls button:focus-visible, .controls input:focus-visible, .controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.controls select { font: 13px var(--font-body); background: var(--bg); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
+.readout { margin-left: auto; font: 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.cap { font-size: 13px; color: var(--muted); padding: 8px 12px 12px; background: var(--sheet); margin: 0; max-width: none; }
+
+/* key numbers */
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.kv div { background: var(--sheet); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.kv span { font-size: 12px; color: var(--muted); }
+.kv b { font-size: 18px; font-weight: 500; }
+.kv b.warn { color: var(--warn); }
+.kv b.ok { color: var(--ok); }
+
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 12px var(--font-body); color: var(--muted); letter-spacing: .03em; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; white-space: nowrap; }
+tr.pick td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tag { display: inline-block; font: 500 11px var(--font-mono); padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.no { color: var(--muted); }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.two > * { min-width: 0; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } h1 { font-size: 28px; } .readout { margin-left: 0; width: 100%; } }
+ol, ul { margin: 0 0 10px; padding-left: 20px; max-width: 70ch; }
+li { margin-bottom: 5px; }
+.formula { font: 14px var(--font-mono); background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 12px; display: block; margin: 6px 0 12px; overflow-x: auto; white-space: pre; }
+code { font: 13px var(--font-mono); }
+.note { border-left: 3px solid var(--warn); padding: 4px 0 4px 12px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Friction wave drive · Ø100 · 140:1 · Rev A concept layout</div>
+    <h1>Taco Drive Rev A</h1>
+    <p class="lede">A flat spring-steel disc, clamped on the output hub, is pressed down at two opposite rim points onto a fixed anvil ring. The sheet folds about one axis only, like a taco. A rotating two-roller carrier moves the fold axis around, and the disc creeps forward by the arc length the fold takes up: about 0.34 mm of rim per wave revolution.</p>
+  </header>
+
+  <section class="viewer" aria-label="3D assembly">
+    <canvas id="stage"></canvas>
+    <div class="controls">
+      <button id="play" type="button">Pause</button>
+      <label for="speed">Input speed <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1"></label>
+      <label for="ratio">Output shown at <select id="ratio"><option value="10">10:1 (demo)</option><option value="140">140:1 (true)</option></select></label>
+      <label for="housing"><input id="housing" type="checkbox"> Housing & motor</label>
+      <label for="exag"><input id="exag" type="checkbox"> Exaggerate pull-in ×10</label>
+      <span class="readout" id="readout">ψ 0° · output 0.00°</span>
+    </div>
+    <p class="cap">Drag to orbit, scroll or pinch to zoom. Blue: roller carrier (input). Grey disc and hub: output; the yellow stripe marks one spot on the disc. Gold: anvil ring, orange: shim stack. The disc shape is computed live from the single-curvature fold model; the pull-in at the rim is real-scale (0.34 mm) unless exaggerated.</p>
+  </section>
+
+  <section>
+    <h2>Key numbers</h2>
+    <div class="kv">
+      <div><span>Ratio, i = r<sub>c</sub>/Δx</span><b>140 : 1</b></div>
+      <div><span>Sheet</span><b>0.15 mm 1.4310</b></div>
+      <div><span>Rim drop δ (set by shims)</span><b>4.41 mm</b></div>
+      <div><span>Bend span L (hub r12 → land r46)</span><b>34 mm</b></div>
+      <div><span>Pull-in Δx = 0.6 δ²/L</span><b>0.343 mm</b></div>
+      <div><span>Peak bending stress 3Etδ/L²</span><b class="warn">±331 MPa</b></div>
+      <div><span>Fatigue margin (vs ±500 MPa, assumed)</span><b class="warn">1.5</b></div>
+      <div><span>Roller force, each</span><b>60 N</b></div>
+      <div><span>Sheet spring-back, each</span><b>5.9 N</b></div>
+      <div><span>Slip torque, μ = 0.30</span><b class="ok">1.56 N·m</b></div>
+      <div><span>Input torque for 1 N·m out (η 0.6)</span><b>12 mN·m</b></div>
+      <div><span>Input speed for 20 rpm out</span><b>2 800 rpm</b></div>
+    </div>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>How it moves</h2>
+      <p>Between the flat hub clamp and the flat land on the anvil, the sheet takes the elastic S-curve of a beam with both ends held flat:</p>
+      <code class="formula">f(s) = δ (3s²/L² − 2s³/L³)
+Δx   = ∫ ½ f′² ds = 0.6 δ²/L
+κmax = 6δ/L²   →   σ = 3 E t δ / L²</code>
+      <p>The rim material under each roller is pinned to the anvil by friction while the fold axis sweeps past. No slip at the contact gives an output rate of Δx/r<sub>c</sub> per radian of input, in the same direction as the carrier.</p>
+      <p>Because Δx goes with δ², the ratio is set by the anvil height relative to the hub face. A shim change of 0.01 mm moves the ratio by about 0.6. One housing can be tuned anywhere from about 110:1 to 180:1 with shims alone.</p>
+    </div>
+    <div>
+      <h2>Why rollers, not discrete clamps</h2>
+      <p>The concept model used 12 plunger clamps firing in pairs. On paper that is fine; in metal it over-constrains the sheet at every hand-off:</p>
+      <ul>
+        <li>While pair A grips and pair B lands, both rim points are pinned to the frame, but the fold axis still has to turn 15° to sit between them. The sheet can only follow by slipping at a pad or by stretching. Each hand-off is a 0.09 mm scrub at the pads.</li>
+        <li>That scrub is the whole output motion, so the pads would wear at the drive's own step size, and the output would tick rather than glide.</li>
+      </ul>
+      <p>A roller is a clamp whose contact point moves continuously. The material under it is momentarily fixed to the anvil, the fold axis turns smoothly, and the output glides. It also replaces 12 plungers, 12 springs and a timing cam with two arms. Discrete clamps stay an option if you want power-off holding; they would need tangentially compliant pads (≈0.1 mm).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sheet thickness trade</h2>
+    <p>Same geometry (Ø100, hub Ø24, land from r46, δ 4.41 mm, 60 N rollers). Ratio does not depend on thickness; stress, spring-back and shear wrinkling do.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>t (mm)</th><th>Bending stress</th><th>Fatigue margin</th><th>Spring-back / roller</th><th>Slip torque</th><th>Hub shear at 1 N·m</th><th>Wrinkle estimate</th><th></th></tr></thead>
+      <tbody>
+        <tr><td class="n">0.10</td><td class="n">±221 MPa</td><td class="n">2.3</td><td class="n">1.8 N</td><td class="n">1.68 N·m</td><td class="n">11.1 MPa</td><td class="n">6.0 MPa</td><td><span class="tag warn">wrinkles</span></td></tr>
+        <tr class="pick"><td class="n">0.15</td><td class="n">±331 MPa</td><td class="n">1.5</td><td class="n">5.9 N</td><td class="n">1.56 N·m</td><td class="n">7.4 MPa</td><td class="n">13.6 MPa</td><td><span class="tag ok">baseline</span></td></tr>
+        <tr><td class="n">0.20</td><td class="n">±442 MPa</td><td class="n">1.1</td><td class="n">14.1 N</td><td class="n">1.32 N·m</td><td class="n">5.5 MPa</td><td class="n">24.2 MPa</td><td><span class="tag warn">fatigue</span></td></tr>
+        <tr><td class="n">0.30</td><td class="n">±662 MPa</td><td class="n">0.75</td><td class="n">47.6 N</td><td class="n">0.36 N·m</td><td class="n">3.7 MPa</td><td class="n">54.4 MPa</td><td><span class="tag no">fails</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="mono" style="font-size:12px;color:var(--muted);margin-top:8px">Every point on the disc sees one full reversed cycle per lobe pass: 2 per input revolution, so 10⁷ cycles in about 30 h at 2 800 rpm. The wrinkle column is a coarse plate-buckling estimate (k ≈ 5); treat it as a flag, not a number.</p>
+  </section>
+
+  <section>
+    <h2>Stack-up</h2>
+    <p>Datum z = 0 is the hub clamp face (underside of the sheet). Everything that sets the ratio sits in one short loop: hub face → output bearings → base → shim stack → anvil top.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Feature</th><th>z (mm)</th><th>Controls</th></tr></thead>
+      <tbody>
+        <tr><td>Motor flange / coupling</td><td class="n">+44 / +31</td><td>NEMA 14 or 28 mm BLDC on four M3 standoffs</td></tr>
+        <tr><td>Top cover with 2× 688 carrier bearings</td><td class="n">+19 … +30</td><td>Takes the 120 N roller reaction; the motor shaft carries none of it</td></tr>
+        <tr><td>Carrier spring plate</td><td class="n">+14 … +18</td><td>M5 set screws preload the springs (≈80 N spring → 60 N at roller, lever 1.375)</td></tr>
+        <tr><td>Roller axle, swing-arm pivot</td><td class="n">+4.74</td><td>Pivot on the same plane as the axle, so centrifugal force (25 N at 2 800 rpm) makes no moment</td></tr>
+        <tr><td>Clamp washer / hub screws</td><td class="n">+0.15 … +4.2</td><td>4× M2.5 low head, PCD 17</td></tr>
+        <tr><td><b>Hub clamp face</b></td><td class="n"><b>0</b></td><td>Lapped; R2 relief where the sheet leaves the clamp</td></tr>
+        <tr><td><b>Anvil top face</b></td><td class="n"><b>−4.41</b></td><td>Ground, flat 0.01; this height sets δ and therefore the ratio</td></tr>
+        <tr><td>Shim stack (0.05 / 0.1 / 0.2 / 0.5)</td><td class="n">−8.91 … −8.41</td><td>Ratio tuning: 0.01 mm ≈ 0.6 on the ratio</td></tr>
+        <tr><td>Base with 2× 6800 output bearings</td><td class="n">−21.9 … −8.9</td><td>Output shaft Ø10 with D-flat exits the bottom</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Bill of materials</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Part</th><th>Qty</th><th>Material / spec</th><th>Make</th></tr></thead>
+      <tbody>
+        <tr><td>Flex disc Ø100</td><td class="n">1</td><td>1.4310 (301) spring-hard C1700, 0.15 mm. Edges deburred and polished; no laser-cut edge</td><td>Photo-etch</td></tr>
+        <tr><td>Output hub with Ø10 shaft</td><td class="n">1</td><td>17-4PH H900 or 7075-T6; clamp face lapped</td><td>Lathe</td></tr>
+        <tr><td>Clamp washer</td><td class="n">1</td><td>Hardened steel, 2.5 mm</td><td>Lathe</td></tr>
+        <tr><td>Anvil ring Ø106/Ø91 × 4</td><td class="n">1</td><td>1.2379 or 52100, 58+ HRC, top face ground Ra 0.4</td><td>Lathe + grind</td></tr>
+        <tr><td>Shim rings Ø106/Ø91</td><td class="n">set</td><td>Shim stock 0.05, 0.1, 0.2, 0.5</td><td>Laser / buy</td></tr>
+        <tr><td>Base, housing ring, top cover</td><td class="n">3</td><td>6061-T6</td><td>Mill / lathe</td></tr>
+        <tr><td>Carrier</td><td class="n">1</td><td>7075-T6, two opposed arms (self-balancing)</td><td>Mill</td></tr>
+        <tr><td>Swing arm with Ø5 stub axle</td><td class="n">2</td><td>17-4PH or tool steel</td><td>Mill</td></tr>
+        <tr><td>Roller: 685-2RS + crowned sleeve OD18 × 5</td><td class="n">2</td><td>100Cr6 sleeve 60 HRC, crown R≈30</td><td>Lathe + buy</td></tr>
+        <tr><td>Compression spring OD10</td><td class="n">2</td><td>≈30 N/mm, ≈80 N at assembly; pick from catalog</td><td>Buy</td></tr>
+        <tr><td>Bearings 6800-2RS / 688-2RS</td><td class="n">2 / 2</td><td>Output / carrier</td><td>Buy</td></tr>
+        <tr><td>Motor</td><td class="n">1</td><td>≥ 20 mN·m continuous, ≥ 3 000 rpm; NEMA 14 stepper for v1</td><td>Buy</td></tr>
+        <tr><td>Coupling 5–8 mm, fasteners, Ø3 pivot pins</td><td class="n">—</td><td>Jaw or bellows; M2.5, M3, M5</td><td>Buy</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Open risks, in the order to test them</h2>
+    <ol>
+      <li><b>Does the sheet really fold as a taco?</b> The model assumes the sheet takes pure single curvature with the land lying flat on the anvil for about ±23° around each roller. Under two point loads it may instead cone or twist near the hub. Test first with a 3D-printed fixture, a 0.15 mm shim-steel disc and a dial gauge, or with a shell FEA run. If the shape is wrong, the ratio and stress are wrong too.</li>
+      <li><b>Fatigue.</b> ±331 MPa against an assumed ±500 MPa endurance gives a margin of 1.5. Hub-clamp fretting and edge finish will set the real life. Get fatigue data for the actual foil and finish.</li>
+      <li><b>Friction coefficient.</b> Slip torque scales with μ. Dry hardened steel on spring steel is 0.15–0.3 and changes with any oil film. Measure it on the rig; a thin hard coating on the anvil (DLC or thermal-sprayed carbide) is the fallback.</li>
+      <li><b>Shear wrinkling at the hub</b> at full torque. Watch for it on the rig. If it appears, use a larger hub clamp, with some loss of bend span.</li>
+      <li><b>Roller spin and efficiency.</b> A 5 mm wide roller on a 47.5 mm track scrubs about 10% across its face. The crown keeps the contact narrow, and a conical roller would remove the scrub entirely. Measure input vs output torque.</li>
+      <li><b>Patent check.</b> A roller or cam pressing a flexible disc against a ring is close to Genesis's mechanical wave-generator variants. The single-curvature fold and the flat land are the distinguishing features. Get a professional opinion before you publish or file.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Files</h2>
+    <p>In the repository under <code>mechanical/taco_drive/</code>: <code>sizing.py</code> (all numbers on this page), <code>cad.py</code> (parametric CadQuery model; change the constants at the top and rerun), <code>out/taco_drive_revA.step</code> (full assembly) and per-part STEP and STL files.</p>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const P = { R0: 50, RH: 12, XF: 46, L: 34, DELTA: 4.41, T: 0.15, RC: 47.5, DX: 0.343 };
+  const PARTS = {
+    output_hub: ["output", "#9aa4ad"], clamp_washer: ["output", "#b8c0c8"], hub_screws: ["output", "#3a3f44"],
+    anvil_ring: ["fixed", "#c9a24a"], shim_ring: ["fixed", "#d97a3a"], base: ["fixed", "#6b7680"],
+    bearing_out_upper: ["fixed", "#555b62"], bearing_out_lower: ["fixed", "#555b62"],
+    bearing_in_lower: ["housing", "#555b62"], bearing_in_upper: ["housing", "#555b62"],
+    housing_ring: ["housing", "#8592a0"], top_cover: ["housing", "#8592a0"], motor: ["housing", "#2c2f33"],
+    motor_standoffs: ["housing", "#8592a0"], coupling: ["carrier", "#a0a0a0"],
+    carrier: ["carrier", "#4a7fb5"], swing_arm_a: ["carrier", "#5d95cc"], swing_arm_b: ["carrier", "#5d95cc"],
+    roller_a: ["carrier", "#e0e4e8"], roller_b: ["carrier", "#e0e4e8"], spring_a: ["carrier", "#c0392b"], spring_b: ["carrier", "#c0392b"]
+  };
+
+  const canvas = document.getElementById("stage");
+  const readout = document.getElementById("readout");
+  if (!window.THREE) { readout.textContent = "3D library failed to load"; return; }
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1.6, 1, 2000);
+  camera.position.set(150, 120, 170);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.set(0, -2, 0);
+  controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(80, 160, 60); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.3); fill.position.set(-120, 40, -80); scene.add(fill);
+
+  // CAD is Z-up; rotate the model into three's Y-up world.
+  const world = new THREE.Group(); world.rotation.x = -Math.PI / 2; scene.add(world);
+  const groups = { fixed: new THREE.Group(), output: new THREE.Group(), carrier: new THREE.Group(), housing: new THREE.Group() };
+  Object.values(groups).forEach(g => world.add(g));
+  groups.housing.visible = false;
+
+  const loader = new THREE.STLLoader();
+  Object.entries(PARTS).forEach(([name, [grp, col]]) => {
+    loader.load("stl/" + name + ".stl", geo => {
+      geo.computeVertexNormals();
+      const transparent = name === "housing_ring" || name === "top_cover";
+      const mat = new THREE.MeshStandardMaterial({ color: col, metalness: 0.35, roughness: 0.55,
+        transparent, opacity: transparent ? 0.35 : 1, depthWrite: !transparent });
+      groups[grp].add(new THREE.Mesh(geo, mat));
+    });
+  });
+
+  // ---- procedural flex disc -------------------------------------------------------------
+  const NR = 46, NT = 240, RIN = 4;
+  const nV = (NR + 1) * (NT + 1);
+  const pos = new Float32Array(nV * 3 * 2);
+  const colors = new Float32Array(nV * 3 * 2);
+  const base = [];
+  for (let side = 0; side < 2; side++)
+    for (let i = 0; i <= NR; i++) for (let j = 0; j <= NT; j++) {
+      const r = RIN + (P.R0 - RIN) * i / NR, th = 2 * Math.PI * j / NT;
+      base.push([r, th, side]);
+      const k = (side * nV + i * (NT + 1) + j) * 3;
+      const stripe = (Math.abs(th) < 0.035 || Math.abs(th - 2 * Math.PI) < 0.035) && r > 14;
+      const c = new THREE.Color(stripe ? "#f2c230" : "#cfd6dd");
+      colors[k] = c.r; colors[k + 1] = c.g; colors[k + 2] = c.b;
+    }
+  const idx = [];
+  for (let side = 0; side < 2; side++) {
+    const o = side * nV;
+    for (let i = 0; i < NR; i++) for (let j = 0; j < NT; j++) {
+      const a = o + i * (NT + 1) + j, b = a + 1, c = a + NT + 1, d = c + 1;
+      if (side === 0) idx.push(a, c, b, b, c, d); else idx.push(a, b, c, b, d, c);
+    }
+  }
+  const dgeo = new THREE.BufferGeometry();
+  dgeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  dgeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  dgeo.setIndex(idx);
+  const disc = new THREE.Mesh(dgeo, new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.5, roughness: 0.35, side: THREE.DoubleSide }));
+  world.add(disc);
+
+  function fold(u) {               // height drop and in-plane pull-in at distance |u| from the fold axis
+    const a = Math.abs(u);
+    if (a <= P.RH) return [0, 0];
+    const s = Math.min(a - P.RH, P.L), q = s / P.L;
+    const z = P.DELTA * (3 * q * q - 2 * q * q * q);
+    // arc length taken up so far: ∫ ½ f'^2 ds, f' = 6δ(q - q²)/L
+    const take = 0.5 * 36 * P.DELTA * P.DELTA / (P.L * P.L) * P.L * (q ** 3 / 3 - q ** 4 / 2 + q ** 5 / 5);
+    return [z, take];
+  }
+
+  function updateDisc(psi, alpha, exag) {
+    const ca = Math.cos(psi), sa = Math.sin(psi);
+    for (let v = 0; v < base.length; v++) {
+      const [r, th, side] = base[v];
+      const phi = th + alpha;
+      let x = r * Math.cos(phi), y = r * Math.sin(phi);
+      const u = x * ca + y * sa, w = -x * sa + y * ca;
+      const [dz, take] = fold(u);
+      const uu = u - Math.sign(u) * take * exag;
+      x = uu * ca - w * sa; y = uu * sa + w * ca;
+      const k = v * 3;
+      pos[k] = x; pos[k + 1] = y; pos[k + 2] = -dz + (side ? P.T : 0);
+    }
+    dgeo.attributes.position.needsUpdate = true;
+    dgeo.computeVertexNormals();
+  }
+
+  // ---- controls ------------------------------------------------------------------------
+  let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const playBtn = document.getElementById("play");
+  playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.addEventListener("click", () => { playing = !playing; playBtn.textContent = playing ? "Pause" : "Play"; });
+  const speedEl = document.getElementById("speed"), ratioEl = document.getElementById("ratio");
+  const housingEl = document.getElementById("housing"), exagEl = document.getElementById("exag");
+  housingEl.addEventListener("change", () => { groups.housing.visible = housingEl.checked; });
+
+  let psi = 0, last = performance.now();
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) {
+      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+  }
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (playing) psi += dt * 1.2 * parseFloat(speedEl.value);
+    const ratio = parseFloat(ratioEl.value);
+    const alpha = psi / ratio;
+    groups.carrier.rotation.z = psi;
+    groups.output.rotation.z = alpha;
+    updateDisc(psi, alpha, exagEl.checked ? 10 : 1);
+    const deg = x => ((x * 180 / Math.PI) % 360 + 360) % 360;
+    readout.textContent = "ψ " + deg(psi).toFixed(0).padStart(3) + "° · output " + (alpha * 180 / Math.PI).toFixed(2) + "°";
+    resize(); controls.update(); renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

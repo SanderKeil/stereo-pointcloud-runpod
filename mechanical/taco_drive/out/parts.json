@@ -1,0 +1,173 @@
+{
+ "parts": {
+  "output_hub": {
+   "group": "output",
+   "color": "#9aa4ad",
+   "material": "7075-T6 or 17-4PH, clamp face lapped",
+   "qty": 1
+  },
+  "clamp_washer": {
+   "group": "output",
+   "color": "#b8c0c8",
+   "material": "Steel, hardened, 2.5 thk",
+   "qty": 1
+  },
+  "hub_screws": {
+   "group": "output",
+   "color": "#3a3f44",
+   "material": "M2.5x6 ISO 7380 low head, 12.9",
+   "qty": 4
+  },
+  "anvil_ring": {
+   "group": "fixed",
+   "color": "#c9a24a",
+   "material": "1.2379 / 52100 hardened 58+ HRC, top face ground Ra0.4, flat 0.01",
+   "qty": 1
+  },
+  "shim_ring": {
+   "group": "fixed",
+   "color": "#d97a3a",
+   "material": "Shim stock stack, 0.5 nominal (0.05/0.1/0.2/0.5) - sets delta",
+   "qty": 1
+  },
+  "base": {
+   "group": "fixed",
+   "color": "#6b7680",
+   "material": "6061-T6",
+   "qty": 1
+  },
+  "housing_ring": {
+   "group": "fixed",
+   "color": "#8592a0",
+   "material": "6061-T6",
+   "qty": 1
+  },
+  "top_cover": {
+   "group": "fixed",
+   "color": "#8592a0",
+   "material": "6061-T6",
+   "qty": 1
+  },
+  "bearing_out_upper": {
+   "group": "fixed",
+   "color": "#444",
+   "material": "6800-2RS 10x19x5",
+   "qty": 1
+  },
+  "bearing_out_lower": {
+   "group": "fixed",
+   "color": "#444",
+   "material": "6800-2RS 10x19x5",
+   "qty": 1
+  },
+  "bearing_in_lower": {
+   "group": "fixed",
+   "color": "#444",
+   "material": "688-2RS 8x16x5",
+   "qty": 1
+  },
+  "bearing_in_upper": {
+   "group": "fixed",
+   "color": "#444",
+   "material": "688-2RS 8x16x5",
+   "qty": 1
+  },
+  "carrier": {
+   "group": "carrier",
+   "color": "#4a7fb5",
+   "material": "7075-T6 (balanced, opposed arms)",
+   "qty": 1
+  },
+  "swing_arm_a": {
+   "group": "carrier",
+   "color": "#5d95cc",
+   "material": "Steel 1.2312 or 17-4PH, stub axle \u00d85 integral",
+   "qty": 1
+  },
+  "roller_a": {
+   "group": "carrier",
+   "color": "#e0e4e8",
+   "material": "685-2RS + crowned sleeve OD18x5, 100Cr6 60 HRC, crown R~30",
+   "qty": 1
+  },
+  "spring_a": {
+   "group": "carrier",
+   "color": "#c0392b",
+   "material": "Compression spring OD10, ~30 N/mm, preload ~80 N (M5 set screw)",
+   "qty": 1
+  },
+  "swing_arm_b": {
+   "group": "carrier",
+   "color": "#5d95cc",
+   "material": "Steel 1.2312 or 17-4PH, stub axle \u00d85 integral",
+   "qty": 1
+  },
+  "roller_b": {
+   "group": "carrier",
+   "color": "#e0e4e8",
+   "material": "685-2RS + crowned sleeve OD18x5, 100Cr6 60 HRC, crown R~30",
+   "qty": 1
+  },
+  "spring_b": {
+   "group": "carrier",
+   "color": "#c0392b",
+   "material": "Compression spring OD10, ~30 N/mm, preload ~80 N (M5 set screw)",
+   "qty": 1
+  },
+  "motor": {
+   "group": "fixed",
+   "color": "#2c2f33",
+   "material": "NEMA14 stepper or 28 mm BLDC, >=20 mN*m",
+   "qty": 1
+  },
+  "motor_standoffs": {
+   "group": "fixed",
+   "color": "#8592a0",
+   "material": "M3 standoffs x4, 14 long",
+   "qty": 1
+  },
+  "coupling": {
+   "group": "carrier",
+   "color": "#a0a0a0",
+   "material": "Jaw/bellows coupling 5-8 mm",
+   "qty": 1
+  },
+  "disc_flat": {
+   "group": "output",
+   "color": "#d0d6dc",
+   "material": "1.4310 (301) spring-hard C1700, t=0.15, photo-etched, edges deburred",
+   "qty": 1
+  }
+ },
+ "params": {
+  "T_SHEET": 0.15,
+  "DELTA": 4.41,
+  "R0": 50.0,
+  "R_HUB": 12.0,
+  "R_C": 47.5,
+  "Z_AXLE": 4.74,
+  "Z_ANVIL_TOP": -4.41,
+  "ROLLER_R": 9.0,
+  "L": 34.0,
+  "RATIO": 140.0,
+  "sizing": {
+   "t": 0.15,
+   "L": 34.0,
+   "dx": 0.34285714285714286,
+   "delta": 4.4077853201547175,
+   "sigma": 331.1558434735616,
+   "SF_fatigue": 1.5098631349983058,
+   "F_springback": 5.944509138728348,
+   "N_anvil": 54.05549086127165,
+   "T_slip": 1.5567981368046235,
+   "di_per_0p01mm": 0.6352396490811212,
+   "tau_hub": 7.368284402402562,
+   "tau_buckle_est": 13.590009028051702,
+   "n_in": 2800.0,
+   "F_centrifugal": 24.76086352145298,
+   "cycles_1e7_hours": 29.761904761904763,
+   "T_in_mNm": 11.904761904761903,
+   "p_hertz": 295.7156927347834
+  }
+ }
+}
