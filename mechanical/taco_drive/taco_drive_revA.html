@@ -255,15 +255,17 @@ code { font: 13px var(--font-mono); }
   groups.housing.visible = false;
 
   const loader = new THREE.STLLoader();
-  Object.entries(PARTS).forEach(([name, [grp, col]]) => {
-    loader.load("stl/" + name + ".stl", geo => {
+  const b64ToBuf = s => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
+  fetch("assembly_meshes.json").then(r => r.json()).then(meshes => Object.entries(PARTS).forEach(([name, [grp, col]]) => {
+    if (!meshes[name]) return;
+    { const geo = loader.parse(b64ToBuf(meshes[name]));
       geo.computeVertexNormals();
       const transparent = name === "housing_ring" || name === "top_cover";
       const mat = new THREE.MeshStandardMaterial({ color: col, metalness: 0.35, roughness: 0.55,
         transparent, opacity: transparent ? 0.35 : 1, depthWrite: !transparent });
       groups[grp].add(new THREE.Mesh(geo, mat));
-    });
-  });
+    }
+  })).catch(() => { readout.textContent = "Part meshes failed to load"; });
 
   // ---- procedural flex disc -------------------------------------------------------------
   const NR = 46, NT = 240, RIN = 4;
